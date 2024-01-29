@@ -2,12 +2,16 @@
 <html>
 <head>
 <title>WebRTC Simulcast Demo</title>
+<style>
+p { font-family: "Lucida Console", "Courier New", monospace; };
+</style>
 </head>
-<script src="./sdp.js"></script>
-<script src="./simulcast.js"></script>
-<script src="./demo.js"></script>
 <body>
   <button onclick="onStart()">Start</button>
   <button onclick="onStop()">Stop</button>
+  <p id="statsParagraphId" />
 </body>
+<script src="./sdp.js"></script>
+<script src="./simulcast.js"></script>
+<script src="./demo.js"></script>
 </html>
