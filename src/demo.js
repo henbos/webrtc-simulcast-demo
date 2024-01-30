@@ -304,7 +304,7 @@ function inboundRtpToString(report, inboundRtp) {
     str += `${codec} ${inboundRtp.frameWidth}x${inboundRtp.frameHeight}` +
            `@${inboundRtp.framesPerSecond}`;
   } else {
-    str += 'inactive';
+    str += 'N/A';
   }
   str += `\nReceived: ${Math.ceil((inboundRtp.bytesReceived ?? 0) / 1000)} kB`;
   return str;
