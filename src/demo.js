@@ -147,9 +147,9 @@ async function onStart(doStop = true) {
     await negotiateWithSimulcastTweaks(null, pc2, offer);
     await pc2GatheringComplete;
     // Now the answer contains the a=candidate lines.
-    const plaintextAnswer = await negotiateWithSimulcastTweaks(null, pc2, offer);
+    const answer = await negotiateWithSimulcastTweaks(null, pc2, offer);
     // To/from base64.
-    encodedAnswer = btoa(plaintextAnswer.sdp);
+    encodedAnswer = btoa(answer.sdp);
     answerInput.value = encodedAnswer;
     if (role == 'receiver') {
       statusParagraph.innerText = 'Pass the Base64 Answer to the sender tab...';
