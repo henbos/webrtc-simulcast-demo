@@ -28,7 +28,6 @@ function onStop() {
 
 async function onStart() {
   onStop();
-  // Initial setup relying on ICE gathering as part of the SDP exchanged.
   pc1 = new RTCPeerConnection();
   const pc1GatheringComplete = new Promise(
       resolve => pc1.onicegatheringstatechange = () => {
@@ -50,17 +49,25 @@ async function onStart() {
   track = stream.getTracks()[0];
   pc1.addTransceiver(track, {sendEncodings:configuredEncodings});
 
-  // Do an initial negotiation where we wait for ICE gathering to complete. This
-  // ensures that all ICE candidates are present in subsequent renegotiations.
-  await renegotiate();
-  await Promise.all([pc1GatheringComplete, pc2GatheringComplete]);
+  // Complete `pc1` ICE gathering and get final offer.
+  await pc1.setLocalDescription();
+  await pc1GatheringComplete;
+  await pc1.setLocalDescription(); 
+  // Now the offer contains the a=candidate lines.
+  const offer = {type:'offer', sdp:pc1.localDescription.sdp};
 
-  // Negotiate a second time, this time ICE candidates should be present.
-  await renegotiate();
+  // Complete `pc2` ICE gathering and get final answer.
+  await negotiateWithSimulcastTweaks(null, pc2, offer);
+  await pc2GatheringComplete;
+  // Now the answer contains the a=candidate lines.
+  const answer = await negotiateWithSimulcastTweaks(null, pc2, offer);
+
+  // Complete O/A.
+  await pc1.setRemoteDescription(answer);
 }
 
 async function renegotiate() {
-  if (pc1 == null) {
+  if (pc1 == null || pc2 == null) {
     return;
   }
   let transceiver = null;

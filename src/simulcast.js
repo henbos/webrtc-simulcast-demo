@@ -227,18 +227,24 @@ function swapRidAndMidExtensionsInSimulcastAnswer(answer, localDescription, rids
   return midToRid(answer, localDescription, rids);
 }
 
-async function negotiateWithSimulcastTweaks(pc1, pc2) {
+async function negotiateWithSimulcastTweaks(pc1, pc2, offer) {
   const rids = [0, 1, 2];
-  const offer = await pc1.createOffer();
-  await pc1.setLocalDescription(offer),
+  if (!offer) {
+    offer = await pc1.createOffer();
+    await pc1.setLocalDescription(offer);
+  }
   await pc2.setRemoteDescription({
     type: 'offer',
     sdp: swapRidAndMidExtensionsInSimulcastOffer(offer, rids),
   });
   const answer = await pc2.createAnswer();
   await pc2.setLocalDescription(answer);
-  await pc1.setRemoteDescription({
+  const modifiedAnswer = {
     type: 'answer',
-    sdp: swapRidAndMidExtensionsInSimulcastAnswer(answer, pc1.localDescription, rids),
-  });
+    sdp: swapRidAndMidExtensionsInSimulcastAnswer(answer, offer, rids),
+  }
+  if (pc1) {
+    await pc1.setRemoteDescription(modifiedAnswer);
+  }
+  return modifiedAnswer;
 }
