@@ -46,12 +46,16 @@ function ridToMid(description, rids) {
       .map(line => line.substring(6).split(' ')[0]);
   }
 
+  // Change compared to chromium: writeIceParameters() includes a=candidate
+  // lines and we've moved them from the top of the SDP (after DTLS) to being
+  // part of the `baseRtpDescription`.
   let sdp = SDPUtils.writeSessionBoilerplate() +
     SDPUtils.writeDtlsParameters(dtls, setupValue) +
-    SDPUtils.writeIceParameters(ice) +
     'a=group:BUNDLE ' + rids.join(' ') + '\r\n' +
     'a=msid-semantic: WMS *\r\n';
-  const baseRtpDescription = SDPUtils.writeRtpDescription(mline.kind, rtpParameters);
+  let baseRtpDescription =
+      SDPUtils.writeRtpDescription(mline.kind, rtpParameters) +
+      SDPUtils.writeIceParameters(ice);
   for (const rid of rids) {
     sdp += baseRtpDescription +
         'a=mid:' + rid + '\r\n' +

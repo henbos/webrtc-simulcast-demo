@@ -380,16 +380,24 @@ SDPUtils.getIceParameters = function(mediaSection, sessionpart) {
   if (!(ufrag && pwd)) {
     return null;
   }
+  var candidates = SDPUtils.matchPrefix(mediaSection + sessionpart,
+    'a=candidate:');
   return {
     usernameFragment: ufrag.substr(12),
     password: pwd.substr(10),
+    candidates
   };
 };
 
 // Serializes ICE parameters to SDP.
 SDPUtils.writeIceParameters = function(params) {
-  return 'a=ice-ufrag:' + params.usernameFragment + '\r\n' +
-      'a=ice-pwd:' + params.password + '\r\n';
+  let str = '';
+  for (const candidate of params.candidates) {
+    str += candidate + '\r\n';
+  }
+  str += 'a=ice-ufrag:' + params.usernameFragment + '\r\n' +
+         'a=ice-pwd:' + params.password + '\r\n';
+  return str;
 };
 
 // Parses the SDP media section and returns RTCRtpParameters.

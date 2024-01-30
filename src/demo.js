@@ -6,6 +6,12 @@ let pc2 = null;
 let track = null;
 let prevOutboundRtpsByRid = null;
 
+const configuredEncodings = [
+  {rid:'0', scaleResolutionDownBy:4, scalabilityMode: 'L1T1'},
+  {rid:'1', scaleResolutionDownBy:2, scalabilityMode: 'L1T1'},
+  {rid:'2', scaleResolutionDownBy:1, scalabilityMode: 'L1T1'},
+];
+
 function onStop() {
   if (pc1 && pc2) {
     pc1.close();
@@ -17,25 +23,39 @@ function onStop() {
     track.stop();
     track = null;
   }
+  statsParagraph.innerText = '';
 }
 
 async function onStart() {
   onStop();
+  // Initial setup relying on ICE gathering as part of the SDP exchanged.
   pc1 = new RTCPeerConnection();
+  const pc1GatheringComplete = new Promise(
+      resolve => pc1.onicegatheringstatechange = () => {
+        if (pc1.iceGatheringState == 'complete') {
+          resolve();
+        }
+      });
   pc2 = new RTCPeerConnection();
-  pc1.onicecandidate = (e) => pc2.addIceCandidate(e.candidate);
-  pc2.onicecandidate = (e) => pc1.addIceCandidate(e.candidate);
+  const pc2GatheringComplete = new Promise(
+      resolve => pc2.onicegatheringstatechange = () => {
+        if (pc2.iceGatheringState == 'complete') {
+          resolve();
+        }
+      });
 
   const stream = await navigator.mediaDevices.getUserMedia({video:{
     width:1280, height:720
   }});
   track = stream.getTracks()[0];
-  const transceiver = pc1.addTransceiver(track, {sendEncodings:[
-    {rid:'0', scaleResolutionDownBy:4, scalabilityMode: 'L1T1'},
-    {rid:'1', scaleResolutionDownBy:2, scalabilityMode: 'L1T1'},
-    {rid:'2', scaleResolutionDownBy:1, scalabilityMode: 'L1T1'},
-  ]});
+  pc1.addTransceiver(track, {sendEncodings:configuredEncodings});
 
+  // Do an initial negotiation where we wait for ICE gathering to complete. This
+  // ensures that all ICE candidates are present in subsequent renegotiations.
+  await renegotiate();
+  await Promise.all([pc1GatheringComplete, pc2GatheringComplete]);
+
+  // Negotiate a second time, this time ICE candidates should be present.
   await renegotiate();
 }
 
@@ -43,7 +63,13 @@ async function renegotiate() {
   if (pc1 == null) {
     return;
   }
-  const transceiver = pc1.getTransceivers()[0];
+  let transceiver = null;
+  for (const t of pc1.getTransceivers()) {
+    if (t.receiver.track.kind == 'video') {
+      transceiver = t;
+      break;
+    }
+  }
   preferCodec(transceiver,
               codecSelect.options[codecSelect.selectedIndex].value);
   await negotiateWithSimulcastTweaks(pc1, pc2);
