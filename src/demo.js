@@ -2,7 +2,18 @@ const codecSelect = document.getElementById('codecSelectId');
 const roleSelect = document.getElementById('roleSelectId');
 const offerInput = document.getElementById('offerInputId');
 const answerInput = document.getElementById('answerInputId');
+
 const statusParagraph = document.getElementById('statusParagraphId');
+
+const recvVideo0 = document.getElementById('recvVideo0Id');
+const recvVideo1 = document.getElementById('recvVideo1Id');
+const recvVideo2 = document.getElementById('recvVideo2Id');
+const recvVideos = [recvVideo0, recvVideo1, recvVideo2];
+const recvVideoParagraph0 = document.getElementById('recvVideoParagraph0Id');
+const recvVideoParagraph1 = document.getElementById('recvVideoParagraph1Id');
+const recvVideoParagraph2 = document.getElementById('recvVideoParagraph2Id');
+const recvVideoParagraphs =
+    [recvVideoParagraph0, recvVideoParagraph1, recvVideoParagraph2];
 
 let pc1 = null;
 let pc2 = null;
@@ -37,6 +48,10 @@ function onStop() {
   answerInput.value = '';
   answerInput.disabled = true;
   statusParagraph.innerText = '';
+  for (let i = 0; i < recvVideos.length; ++i) {
+    recvVideos[i].srcObject = null;
+    recvVideoParagraphs[i].innerText = '';
+  }
 }
 
 async function onStart(doStop = true) {
@@ -122,6 +137,11 @@ async function onStart(doStop = true) {
             resolve();
           }
         });
+    pc2.ontrack = e => {
+      const recvVideo = recvVideos[e.transceiver.mid];
+      recvVideo.srcObject = new MediaStream();
+      recvVideo.srcObject.addTrack(e.track);
+    };
 
     // Complete `pc2` ICE gathering and get final answer.
     await negotiateWithSimulcastTweaks(null, pc2, offer);
@@ -189,7 +209,7 @@ async function pollGetStats() {
       }
       outboundRtpsByRid.set(stats.rid, stats);
     }
-    let statusStr = '';
+    let statusStr = 'Sender Stats\n\n';
     for (let i = 0; i < 3; ++i) {
       if (i != 0) {
         statusStr += '\n';
@@ -205,18 +225,20 @@ async function pollGetStats() {
     statusParagraph.innerText += `\n\nLimited by ${qualityLimitationReason}.`;
 
     prevOutboundRtpsByRid = outboundRtpsByRid;
-  } else if (pc2 !== null) {
+  }
+  if (pc2 !== null) {
     const report = await pc2.getStats();
     let bytesReceived = 0;
     for (const stats of report.values()) {
       if (stats.type !== 'inbound-rtp') {
         continue;
       }
+      const recvVideoParagraph = recvVideoParagraphs[stats.mid];
+      recvVideoParagraph.innerText = inboundRtpToString(report, stats);
       bytesReceived += stats.bytesReceived ?? 0;
     }
-    if (bytesReceived > 0) {
-      statusParagraph.innerText =
-          `Received: ${Math.ceil(bytesReceived/1000)} kB`;
+    if (pc1 === null && bytesReceived > 0) {
+      statusParagraph.innerText = '';
     }
   }
   setTimeout(pollGetStats, 1000);
@@ -228,12 +250,12 @@ function outboundRtpToString(report, outboundRtp, prevOutboundRtp) {
     return 'null';
   }
   if (!outboundRtp.active) {
-    return `{rid:${outboundRtp.rid}, inactive}`;
+    return `rid:${outboundRtp.rid}, inactive`;
   }
   const currFramesEncoded = outboundRtp.framesEncoded ?? 0;
   const prevFramesEncoded = prevOutboundRtp?.framesEncoded ?? 0;
   if (currFramesEncoded <= prevFramesEncoded) {
-    return `{rid:${outboundRtp.rid}, active but not encoding}`;
+    return `rid:${outboundRtp.rid}, active but not encoding`;
   }
   let codec = null;
   if (outboundRtp.codecId) {
@@ -268,4 +290,22 @@ function simplifyEncoderString(rid, encoderImplementation) {
     }
   }
   return encoderImplementation;
+}
+
+function inboundRtpToString(report, inboundRtp) {
+  let str = '';
+  let codec = null;
+  if (inboundRtp.codecId) {
+    const codecStats = report.get(inboundRtp.codecId);
+    codec = codecStats.mimeType.substring(codecStats.mimeType.indexOf('/') + 1);
+  }
+  if (codec && inboundRtp.frameWidth && inboundRtp.frameHeight &&
+      inboundRtp.framesPerSecond) {
+    str += `${codec} ${inboundRtp.frameWidth}x${inboundRtp.frameHeight}` +
+           `@${inboundRtp.framesPerSecond}`;
+  } else {
+    str += 'inactive';
+  }
+  str += `\nReceived: ${Math.ceil((inboundRtp.bytesReceived ?? 0) / 1000)} kB`;
+  return str;
 }

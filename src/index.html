@@ -3,7 +3,8 @@
 <head>
 <title>WebRTC Simulcast Demo</title>
 <style>
-p { font-family: "Lucida Console", "Courier New", monospace; };
+* { font-family: "Lucida Console", "Courier New", monospace; }
+video { width:320px; }
 </style>
 </head>
 <body>
@@ -28,6 +29,25 @@ p { font-family: "Lucida Console", "Courier New", monospace; };
     <input type="text" disabled="true" id="answerInputId" name="answerInputId">
   </p>
   <p id="statusParagraphId" />
+  <table>
+    <tr>
+      <td>
+        <video id="recvVideo0Id" autoplay></video>
+        <br/>
+        <p id="recvVideoParagraph0Id" />
+      </td>
+      <td>
+        <video id="recvVideo1Id" autoplay></video>
+        <br/>
+        <p id="recvVideoParagraph1Id" />
+      </td>
+      <td>
+        <video id="recvVideo2Id" autoplay></video>
+        <br/>
+        <p id="recvVideoParagraph2Id" />
+      </td>
+    </tr>
+  </table>
 </body>
 <script src="./sdp.js"></script>
 <script src="./simulcast.js"></script>
