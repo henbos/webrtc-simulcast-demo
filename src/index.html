@@ -7,6 +7,11 @@ p { font-family: "Lucida Console", "Courier New", monospace; };
 </style>
 </head>
 <body>
+  <select name="codec" id="codecSelectId" onchange="renegotiate()">
+    <option value="VP9">VP9</option>
+    <option value="VP8">VP8</option>
+    <option value="H264">H264</option>
+  </select>
   <button onclick="onStart()">Start</button>
   <button onclick="onStop()">Stop</button>
   <p id="statsParagraphId" />

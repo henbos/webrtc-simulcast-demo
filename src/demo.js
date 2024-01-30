@@ -1,3 +1,4 @@
+const codecSelect = document.getElementById('codecSelectId');
 const statsParagraph = document.getElementById('statsParagraphId');
 
 let pc1 = null;
@@ -24,13 +25,6 @@ async function onStart() {
   pc2 = new RTCPeerConnection();
   pc1.onicecandidate = (e) => pc2.addIceCandidate(e.candidate);
   pc2.onicecandidate = (e) => pc1.addIceCandidate(e.candidate);
-  const iceConnectedPromise = new Promise(
-      resolve => pc1.oniceconnectionstatechange = () => {
-        if (pc1.iceConnectionState == 'connected' ||
-            pc1.iceConnectionState == 'connected') {
-          resolve();
-        }
-      });
 
   const stream = await navigator.mediaDevices.getUserMedia({video:{
     width:1280, height:720
@@ -42,17 +36,18 @@ async function onStart() {
     {rid:'2', scaleResolutionDownBy:1, scalabilityMode: 'L1T1'},
   ]});
 
-  preferCodec(transceiver, 'VP9');
+  await renegotiate();
+}
+
+async function renegotiate() {
+  if (pc1 == null) {
+    return;
+  }
+  const transceiver = pc1.getTransceivers()[0];
+  preferCodec(transceiver,
+              codecSelect.options[codecSelect.selectedIndex].value);
   await negotiateWithSimulcastTweaks(pc1, pc2);
-
-  await iceConnectedPromise;
-  console.log('Connected');
-
-  // // What if pc2 stops receiving?
-  // for (const transceiver of pc2.getTransceivers()) {
-  //   transceiver.stop();
-  // }
-  // await pc2.setLocalDescription();  // Bug: has to SLD to stop receiving.
+  prevOutboundRtpsByRid = null;
 }
 
 function preferCodec(transceiver, codec) {
@@ -117,21 +112,16 @@ function outboundRtpToString(report, outboundRtp, prevOutboundRtp) {
     const codecStats = report.get(outboundRtp.codecId);
     codec = codecStats.mimeType.substring(codecStats.mimeType.indexOf('/') + 1);
   }
-  const json = {
-    rid: outboundRtp.rid ?? null,
-    resFps: 1,  // placeholder
-    impl: simplifyEncoderString(outboundRtp.rid,
-                                outboundRtp.encoderImplementation),
-  };
-  let resolutionFpsStr = 'undefined';
+  let str = `rid:${outboundRtp.rid}`;
   if (codec && outboundRtp.frameWidth && outboundRtp.frameHeight &&
       outboundRtp.framesPerSecond) {
-    resolutionFpsStr =
-        `${codec} ${outboundRtp.frameWidth}x${outboundRtp.frameHeight}` +
-        `@${outboundRtp.framesPerSecond}`;
+    str +=
+        ` ${codec} ${outboundRtp.frameWidth}x${outboundRtp.frameHeight}` +
+        `@${outboundRtp.framesPerSecond} ${outboundRtp.scalabilityMode}`;
   }
-  return JSON.stringify(json).replaceAll('"', '').replaceAll(',', ', ')
-      .replaceAll('resFps:1', resolutionFpsStr).replaceAll('impl:', '');
+  str += ` ${simplifyEncoderString(
+      outboundRtp.rid, outboundRtp.encoderImplementation)}`;
+  return str;
 }
 
 function simplifyEncoderString(rid, encoderImplementation) {
