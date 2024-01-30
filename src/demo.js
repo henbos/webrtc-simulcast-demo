@@ -1,5 +1,8 @@
 const codecSelect = document.getElementById('codecSelectId');
-const statsParagraph = document.getElementById('statsParagraphId');
+const roleSelect = document.getElementById('roleSelectId');
+const offerInput = document.getElementById('offerInputId');
+const answerInput = document.getElementById('answerInputId');
+const statusParagraph = document.getElementById('statusParagraphId');
 
 let pc1 = null;
 let pc2 = null;
@@ -13,57 +16,135 @@ const configuredEncodings = [
 ];
 
 function onStop() {
-  if (pc1 && pc2) {
+  if (pc1) {
     pc1.close();
-    pc2.close();
-    pc1 = pc2 = null;
-    prevOutboundRtpsByRid = null;
+    pc1 = null;
   }
+  if (pc2) {
+    pc2.close();
+    pc2 = null;
+  }
+  prevOutboundRtpsByRid = null;
   if (track) {
     track.stop();
     track = null;
   }
-  statsParagraph.innerText = '';
+  codecSelect.disabled = false;
+  roleSelect.disabled = false;
+  offerInput.onchange = null;
+  offerInput.value = '';
+  offerInput.disabled = true;
+  answerInput.value = '';
+  answerInput.disabled = true;
+  statusParagraph.innerText = '';
 }
 
-async function onStart() {
-  onStop();
-  pc1 = new RTCPeerConnection();
-  const pc1GatheringComplete = new Promise(
-      resolve => pc1.onicegatheringstatechange = () => {
-        if (pc1.iceGatheringState == 'complete') {
-          resolve();
-        }
-      });
-  pc2 = new RTCPeerConnection();
-  const pc2GatheringComplete = new Promise(
-      resolve => pc2.onicegatheringstatechange = () => {
-        if (pc2.iceGatheringState == 'complete') {
-          resolve();
-        }
-      });
+async function onStart(doStop = true) {
+  if (doStop) {
+    onStop();
+  }
 
-  const stream = await navigator.mediaDevices.getUserMedia({video:{
-    width:1280, height:720
-  }});
-  track = stream.getTracks()[0];
-  pc1.addTransceiver(track, {sendEncodings:configuredEncodings});
+  // The role is one of the following:
+  // - "loopback": The page contains both `pc1` and `pc2`, O/A is automatic.
+  // - "sender": The page only contains `pc1`, O/A is done via copy-pasting.
+  // - "receiver": The page only contains `pc2`, O/A is done via copy-pasting.
+  const role = roleSelect.options[roleSelect.selectedIndex].value;
+  let encodedOffer = null;
+  let encodedAnswer = null;
 
-  // Complete `pc1` ICE gathering and get final offer.
-  await pc1.setLocalDescription();
-  await pc1GatheringComplete;
-  await pc1.setLocalDescription(); 
-  // Now the offer contains the a=candidate lines.
-  const offer = {type:'offer', sdp:pc1.localDescription.sdp};
+  roleSelect.disabled = true;
+  if (role != 'loopback') {
+    codecSelect.disabled = true;
+  }
+  if (role == 'sender') {
+    answerInput.disabled = false;
+  }
+  if (role == 'receiver') {
+    offerInput.disabled = false;
+  }
 
-  // Complete `pc2` ICE gathering and get final answer.
-  await negotiateWithSimulcastTweaks(null, pc2, offer);
-  await pc2GatheringComplete;
-  // Now the answer contains the a=candidate lines.
-  const answer = await negotiateWithSimulcastTweaks(null, pc2, offer);
+  // Create sender and SDP offer.
+  if (pc1 == null && (role == 'loopback' || role == 'sender')) {
+    pc1 = new RTCPeerConnection();
+    const pc1GatheringComplete = new Promise(
+        resolve => pc1.onicegatheringstatechange = () => {
+          if (pc1.iceGatheringState == 'complete') {
+            resolve();
+          }
+        });
 
-  // Complete O/A.
-  await pc1.setRemoteDescription(answer);
+    const stream = await navigator.mediaDevices.getUserMedia({video:{
+      width:1280, height:720
+    }});
+    track = stream.getTracks()[0];
+    const transceiver =
+        pc1.addTransceiver(track, {sendEncodings:configuredEncodings});
+    preferCodec(transceiver,
+                codecSelect.options[codecSelect.selectedIndex].value);
+
+    // Complete `pc1` ICE gathering and get final offer.
+    await pc1.setLocalDescription();
+    await pc1GatheringComplete;
+    await pc1.setLocalDescription();  // Now the offer contains a=candidates.
+
+    // Base64 encode the offer for easier copy-pasting.
+    encodedOffer = btoa(pc1.localDescription.sdp);
+    offerInput.value = encodedOffer;
+
+    if (role == 'sender') {
+      answerInput.onchange = () => onStart(/*doStop=*/false);
+      statusParagraph.innerText =
+          'Pass Base64 Offer to receiver tab and then enter the Base64 ' +
+          'Answer to continue...';
+      return;
+    }
+  }
+
+  // Create receiver and SDP answer.
+  if (role == 'loopback' || role == 'receiver') {
+    if (role == 'receiver') {
+      if (offerInput.value.length == 0) {
+        offerInput.onchange = () => onStart(/*doStop=*/false);
+        statusParagraph.innerText = 'Enter Base64 Offer to continue...';
+        return;
+      }
+      encodedOffer = offerInput.value;
+    }
+    offerInput.onchange = null;
+    offerInput.disabled = true;
+    statusParagraph.innerText = 'Creating answer...';
+    const offer = {type:'offer', sdp:atob(encodedOffer)};
+
+    pc2 = new RTCPeerConnection();
+    const pc2GatheringComplete = new Promise(
+        resolve => pc2.onicegatheringstatechange = () => {
+          if (pc2.iceGatheringState == 'complete') {
+            resolve();
+          }
+        });
+
+    // Complete `pc2` ICE gathering and get final answer.
+    await negotiateWithSimulcastTweaks(null, pc2, offer);
+    await pc2GatheringComplete;
+    // Now the answer contains the a=candidate lines.
+    const plaintextAnswer = await negotiateWithSimulcastTweaks(null, pc2, offer);
+    // To/from base64.
+    encodedAnswer = btoa(plaintextAnswer.sdp);
+    answerInput.value = encodedAnswer;
+    if (role == 'receiver') {
+      statusParagraph.innerText = 'Pass the Base64 Answer to the sender tab...';
+    }
+  }
+
+  // The final step: Set remote answer on sender.
+  if (pc1 != null) {
+    if (role == 'sender') {
+      encodedAnswer = answerInput.value;
+      answerInput.disabled = true;
+    }
+    const answer = {type:'answer', sdp:atob(encodedAnswer)};
+    await pc1.setRemoteDescription(answer);
+  }
 }
 
 async function renegotiate() {
@@ -98,7 +179,8 @@ function preferCodec(transceiver, codec) {
 }
 
 async function pollGetStats() {
-  if (pc1 !== null) {
+  if (pc1 !== null && (pc1.iceConnectionState == 'connected' ||
+                       pc1.iceConnectionState == 'completed')) {
     const report = await pc1.getStats();
     const outboundRtpsByRid = new Map();
     for (const stats of report.values()) {
@@ -116,13 +198,26 @@ async function pollGetStats() {
           report, outboundRtpsByRid.get(`${i}`),
           prevOutboundRtpsByRid?.get(`${i}`));
     }
-    statsParagraph.innerText = statusStr;
+    statusParagraph.innerText = statusStr;
 
     const qualityLimitationReason =
         outboundRtpsByRid.get('0')?.qualityLimitationReason ?? 'none';
-    statsParagraph.innerText += `\n\nLimited by ${qualityLimitationReason}.`;
+    statusParagraph.innerText += `\n\nLimited by ${qualityLimitationReason}.`;
 
     prevOutboundRtpsByRid = outboundRtpsByRid;
+  } else if (pc2 !== null) {
+    const report = await pc2.getStats();
+    let bytesReceived = 0;
+    for (const stats of report.values()) {
+      if (stats.type !== 'inbound-rtp') {
+        continue;
+      }
+      bytesReceived += stats.bytesReceived ?? 0;
+    }
+    if (bytesReceived > 0) {
+      statusParagraph.innerText =
+          `Received: ${Math.ceil(bytesReceived/1000)} kB`;
+    }
   }
   setTimeout(pollGetStats, 1000);
 }
