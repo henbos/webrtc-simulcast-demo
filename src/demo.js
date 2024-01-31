@@ -183,9 +183,8 @@ async function onStart(doStop = true) {
     const answer = {type:'answer', sdp:atob(encodedAnswer)};
     await pc1.setRemoteDescription(answer);
     // Workaround to browser bug: if we negotiate kSVC or S-modes, we have to
-    // setParameters() again or else it does fallback to L1T3 and I think
-    // there's something wrong with the bitrate because the 180p layer is
-    // flakily not sending.
+    // setParameters() again or else it does fallback to L1T3 so we end up with
+    // 1:1:1 L1T3 so the "lowest" layer has trouble keeping up at 720p.
     onEncodingsChanged();
   }
 }
