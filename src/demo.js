@@ -5,6 +5,27 @@ const answerInput = document.getElementById('answerInputId');
 
 const statusParagraph = document.getElementById('statusParagraphId');
 
+const encodingsTable = document.getElementById('encodingsTableId');
+const e0_scalabilityMode = document.getElementById('e0_scalabilityModeId');
+const e0_scaleResolutionDownBy = document.getElementById('e0_scaleResolutionDownById');
+const e0_active = document.getElementById('e0_activeId');
+const e1_scalabilityMode = document.getElementById('e1_scalabilityModeId');
+const e1_scaleResolutionDownBy = document.getElementById('e1_scaleResolutionDownById');
+const e1_active = document.getElementById('e1_activeId');
+const e2_scalabilityMode = document.getElementById('e2_scalabilityModeId');
+const e2_scaleResolutionDownBy = document.getElementById('e2_scaleResolutionDownById');
+const e2_active = document.getElementById('e2_activeId');
+const encodings_scalabilityMode = [
+  e0_scalabilityMode, e1_scalabilityMode, e2_scalabilityMode
+];
+const encodings_scaleResolutionDownBy = [
+  e0_scaleResolutionDownBy, e1_scaleResolutionDownBy, e2_scaleResolutionDownBy
+];
+const encodings_active = [
+  e0_active, e1_active, e2_active
+];
+const encodingStatusParagraph = document.getElementById('encodingStatusParagraphId');
+
 const recvVideo0 = document.getElementById('recvVideo0Id');
 const recvVideo1 = document.getElementById('recvVideo1Id');
 const recvVideo2 = document.getElementById('recvVideo2Id');
@@ -19,12 +40,6 @@ let pc1 = null;
 let pc2 = null;
 let track = null;
 let prevOutboundRtpsByRid = null;
-
-const configuredEncodings = [
-  {rid:'0', scaleResolutionDownBy:4, scalabilityMode: 'L1T1'},
-  {rid:'1', scaleResolutionDownBy:2, scalabilityMode: 'L1T1'},
-  {rid:'2', scaleResolutionDownBy:1, scalabilityMode: 'L1T1'},
-];
 
 function onStop() {
   if (pc1) {
@@ -48,10 +63,12 @@ function onStop() {
   answerInput.value = '';
   answerInput.disabled = true;
   statusParagraph.innerText = '';
+  encodingsTable.className = '';
   for (let i = 0; i < recvVideos.length; ++i) {
     recvVideos[i].srcObject = null;
     recvVideoParagraphs[i].innerText = '';
   }
+  clearHighlighting();
 }
 
 async function onStart(doStop = true) {
@@ -76,6 +93,7 @@ async function onStart(doStop = true) {
   }
   if (role == 'receiver') {
     offerInput.disabled = false;
+    encodingsTable.className = 'hide';
   }
 
   // Create sender and SDP offer.
@@ -93,7 +111,7 @@ async function onStart(doStop = true) {
     }});
     track = stream.getTracks()[0];
     const transceiver =
-        pc1.addTransceiver(track, {sendEncodings:configuredEncodings});
+        pc1.addTransceiver(track, {sendEncodings:getEncodingsFromHtml()});
     preferCodec(transceiver,
                 codecSelect.options[codecSelect.selectedIndex].value);
 
@@ -164,6 +182,9 @@ async function onStart(doStop = true) {
     }
     const answer = {type:'answer', sdp:atob(encodedAnswer)};
     await pc1.setRemoteDescription(answer);
+    // Workaround to browser bug: if we negotiate kSVC or S-modes, we have to
+    // setParameters() again.
+    onEncodingsChanged();
   }
 }
 
@@ -182,6 +203,93 @@ async function renegotiate() {
               codecSelect.options[codecSelect.selectedIndex].value);
   await negotiateWithSimulcastTweaks(pc1, pc2);
   prevOutboundRtpsByRid = null;
+}
+
+function setValueAndMaybeHighlight(element, value) {
+  if (element.value != value) {
+    element.classList.add('highlightColor');
+  }
+  element.value = value;
+}
+function clearHighlighting() {
+  for (const elements of
+       [encodings_scalabilityMode, encodings_scaleResolutionDownBy,
+        encodings_active]) {
+    for (const element of elements) {
+      element.classList.remove('highlightColor');
+    }
+  }
+}
+
+async function onEncodingsChanged(optionsStr) {
+  clearHighlighting();
+  if (optionsStr == 'triggerPresets') {
+    const scalabilityMode = e0_scalabilityMode.value;
+    e0_scalabilityMode.classList.add('highlightColor');
+    setValueAndMaybeHighlight(e1_scalabilityMode, scalabilityMode);
+    setValueAndMaybeHighlight(e2_scalabilityMode, scalabilityMode);
+    if (scalabilityMode.startsWith('S') || scalabilityMode.endsWith('_KEY')) {
+      // S-modes or kSVC
+      if (scalabilityMode[1] != '2') {
+        // Full-scale (S3Ty or L3Ty_KEY).
+        setValueAndMaybeHighlight(e0_scaleResolutionDownBy, '1');
+      } else {
+        // Half-scale (S2Ty or L2Ty_KEY).
+        setValueAndMaybeHighlight(e0_scaleResolutionDownBy, '2');
+      }
+      setValueAndMaybeHighlight(e0_active, 'true');
+      setValueAndMaybeHighlight(e1_scaleResolutionDownBy, '');
+      setValueAndMaybeHighlight(e1_active, 'false');
+      setValueAndMaybeHighlight(e2_scaleResolutionDownBy, '');
+      setValueAndMaybeHighlight(e2_active, 'false');
+    } else {
+      setValueAndMaybeHighlight(e0_scaleResolutionDownBy, '4');
+      setValueAndMaybeHighlight(e0_active, 'true');
+      setValueAndMaybeHighlight(e1_scaleResolutionDownBy, '2');
+      setValueAndMaybeHighlight(e1_active, 'true');
+      setValueAndMaybeHighlight(e2_scaleResolutionDownBy, '1');
+      setValueAndMaybeHighlight(e2_active, 'true');
+    }
+  }
+  if (pc1 == null) {
+    return;
+  }
+  const sender = pc1.getSenders()[0];
+  const params = sender.getParameters();
+  const newEncodings = getEncodingsFromHtml(/*deleteUndefiend=*/false);
+  for (let i = 0; i < 3; ++i) {
+    for (let attribute in newEncodings[i]) {
+      params.encodings[i][attribute] = newEncodings[i][attribute];
+    }
+  }
+  encodingStatusParagraph.className = '';
+  encodingStatusParagraph.innerText = 'Setting parameters...';
+  try {
+    await sender.setParameters(params);
+    encodingStatusParagraph.innerText = '';
+  } catch (e) {
+    encodingStatusParagraph.className = 'highlightColor';
+    encodingStatusParagraph.innerText = e.message;
+  }
+}
+
+function getEncodingsFromHtml(deleteUndefined = true) {
+  const encodings = [];
+  for (let i = 0; i < 3; ++i) {
+    encodings.push({});
+    encodings[i].scalabilityMode = encodings_scalabilityMode[i].value;
+    encodings[i].scaleResolutionDownBy =
+        parseFloat(encodings_scaleResolutionDownBy[i].value);
+    if (isNaN(encodings[i].scaleResolutionDownBy)) {
+      if (deleteUndefined) {
+        delete encodings[i].scaleResolutionDownBy;
+      } else {
+        encodings[i].scaleResolutionDownBy = undefined;
+      }
+    }
+    encodings[i].active = (encodings_active[i].value == 'true');
+  }
+  return encodings;
 }
 
 function preferCodec(transceiver, codec) {

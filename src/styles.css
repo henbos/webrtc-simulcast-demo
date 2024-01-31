@@ -1,0 +1,28 @@
+* {
+  font-family: "Lucida Console", "Courier New", monospace;
+}
+
+video {
+  width: 320px;
+}
+
+.paramLabel, .paramInput {
+  font-size: small;
+}
+.paramLabel {
+  display: inline-block;
+  width: 170px;
+}
+.paramInput {
+  width: 90px;
+  margin-right: 30px;
+  margin-bottom: 5px;
+}
+
+.hide {
+  display: none;
+}
+
+.highlightColor {
+  color: red;
+}

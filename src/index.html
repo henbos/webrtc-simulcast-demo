@@ -1,11 +1,8 @@
 <!doctype html>
 <html>
 <head>
-<title>WebRTC Simulcast Demo</title>
-<style>
-* { font-family: "Lucida Console", "Courier New", monospace; }
-video { width:320px; }
-</style>
+  <title>WebRTC Simulcast Demo</title>
+  <link rel="stylesheet" href="styles.css"/>
 </head>
 <body>
   <p>
@@ -28,7 +25,76 @@ video { width:320px; }
     <label for="answerInputId">Base64 Answer:</label>
     <input type="text" disabled="true" id="answerInputId" name="answerInputId">
   </p>
-  <p id="statusParagraphId" />
+  <p id="statusParagraphId"/>
+  <table id="encodingsTableId">
+    <tr>
+      <td>
+        <label class="paramLabel" for="e0_rid">rid:</label>
+        <input class="paramInput" type="text" id="e0_ridId" name="e0_rid" disabled="true" value="0"><br/>
+        <label class="paramLabel" for="e0_scalabilityMode">scalabilityMode:</label>
+        <select class="paramInput" id="e0_scalabilityModeId" name="e0_scalabilityMode" onchange="onEncodingsChanged('triggerPresets')">
+          <option value="L1T1">L1T1</option>
+          <option value="L1T2">L1T2</option>
+          <option value="L1T3">L1T3</option>
+          <option value="L2T3_KEY">L2T3_KEY</option>
+          <option value="L3T3_KEY">L3T3_KEY</option>
+          <option value="S2T3">S2T3</option>
+          <option value="S3T3">S3T3</option>
+        </select><br/>
+        <label class="paramLabel" for="e0_scaleResolutionDownBy">scaleResolutionDownBy:</label>
+        <input class="paramInput" type="text" id="e0_scaleResolutionDownById" name="e0_scaleResolutionDownBy" value="4" oninput="onEncodingsChanged()"><br/>
+        <label class="paramLabel" for="e0_active">active:</label>
+        <select class="paramInput" id="e0_activeId" name="e0_active" onchange="onEncodingsChanged()">
+          <option value="true">true</option>
+          <option value="false">false</option>
+        </select><br/>
+      </td>
+      <td>
+        <label class="paramLabel" for="e1_rid">rid:</label>
+        <input class="paramInput" type="text" id="e1_ridId" name="e1_rid" disabled="true" value="1"><br/>
+        <label class="paramLabel" for="e1_scalabilityMode">scalabilityMode:</label>
+        <select class="paramInput" id="e1_scalabilityModeId" name="e1_scalabilityMode" onchange="onEncodingsChanged()">
+          <option value="L1T1">L1T1</option>
+          <option value="L1T2">L1T2</option>
+          <option value="L1T3">L1T3</option>
+          <option value="L2T3_KEY">L2T3_KEY</option>
+          <option value="L3T3_KEY">L3T3_KEY</option>
+          <option value="S2T3">S2T3</option>
+          <option value="S3T3">S3T3</option>
+        </select><br/>
+        <label class="paramLabel" for="e1_scaleResolutionDownBy">scaleResolutionDownBy:</label>
+        <input class="paramInput" type="text" id="e1_scaleResolutionDownById" name="e1_scaleResolutionDownBy" value="2" oninput="onEncodingsChanged()"><br/>
+        <label class="paramLabel" for="e1_active">active:</label>
+        <select class="paramInput" id="e1_activeId" name="e1_active" onchange="onEncodingsChanged()">
+          <option value="true">true</option>
+          <option value="false">false</option>
+        </select><br/>
+      </td>
+      <td>
+        <label class="paramLabel" for="e2_rid">rid:</label>
+        <input class="paramInput" type="text" id="e2_ridId" name="e2_rid" disabled="true" value="2"><br/>
+        <label class="paramLabel" for="e2_scalabilityMode">scalabilityMode:</label>
+        <select class="paramInput" id="e2_scalabilityModeId" name="e2_scalabilityMode" onchange="onEncodingsChanged()">
+          <option value="L1T1">L1T1</option>
+          <option value="L1T2">L1T2</option>
+          <option value="L1T3">L1T3</option>
+          <option value="L2T3_KEY">L2T3_KEY</option>
+          <option value="L3T3_KEY">L3T3_KEY</option>
+          <option value="S2T3">S2T3</option>
+          <option value="S3T3">S3T3</option>
+        </select><br/>
+        <label class="paramLabel" for="e2_scaleResolutionDownBy">scaleResolutionDownBy:</label>
+        <input class="paramInput" type="text" id="e2_scaleResolutionDownById" name="e2_scaleResolutionDownBy" value="1" oninput="onEncodingsChanged()"><br/>
+        <label class="paramLabel" for="e2_active">active:</label>
+        <select class="paramInput" id="e2_activeId" name="e2_active" onchange="onEncodingsChanged()">
+          <option value="true">true</option>
+          <option value="false">false</option>
+        </select><br/>
+      </td>
+    </tr>
+  </table>
+  <p id="encodingStatusParagraphId"/>
+  <br/>
   <table>
     <tr>
       <td>
