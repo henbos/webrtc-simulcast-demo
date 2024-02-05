@@ -321,7 +321,11 @@ async function pollGetStats() {
       }
       outboundRtpsByRid.set(stats.rid, stats);
     }
-    let statusStr = 'Sender Stats\n\n';
+    let totalSendBytes = 0;
+    let prevTotalSendBytes = 0;
+    let deltaTimestampMs = 1000;
+
+    let statusStr = '';
     let qpStr = '';
     for (let i = 0; i < 3; ++i) {
       if (i != 0) {
@@ -330,6 +334,15 @@ async function pollGetStats() {
       }
       const outboundRtp = outboundRtpsByRid.get(`${i}`);
       const prevOutboundRtp = pc1PrevStatsReport.get(outboundRtp.id);
+
+      totalSendBytes += outboundRtp.bytesSent;
+      if (prevOutboundRtp) {
+        prevTotalSendBytes += prevOutboundRtp.bytesSent;
+        // The delta of all RTP stats objects should be the same so it doesn't
+        // matter from which RID we take the delta timestamp.
+        deltaTimestampMs = outboundRtp.timestamp - prevOutboundRtp.timestamp;
+      }
+
       statusStr += outboundRtpToString(report, outboundRtp, prevOutboundRtp);
       if (prevOutboundRtp &&
           outboundRtp.framesEncoded > prevOutboundRtp.framesEncoded) {
@@ -340,6 +353,10 @@ async function pollGetStats() {
         qpStr += 'N/A';
       }
     }
+    const totalBps =
+        (totalSendBytes - prevTotalSendBytes) / deltaTimestampMs * 1000;
+    statusStr =
+        `Sending ${Math.round(totalBps * 8 / 1000)} kbps...\n\n${statusStr}`;
     const reason =
         outboundRtpsByRid.get('0')?.qualityLimitationReason ?? 'none';
     statusStr += `\n\nLimited by ${reason} (QP values: ${qpStr}).`;
