@@ -2,18 +2,22 @@ const codecSelect = document.getElementById('codecSelectId');
 const roleSelect = document.getElementById('roleSelectId');
 const offerInput = document.getElementById('offerInputId');
 const answerInput = document.getElementById('answerInputId');
+const checkboxMaxBitrateTweak = document.getElementById('checkboxMaxBitrateTweakId');
 
 const statusParagraph = document.getElementById('statusParagraphId');
 
 const encodingsTable = document.getElementById('encodingsTableId');
 const e0_scalabilityMode = document.getElementById('e0_scalabilityModeId');
 const e0_scaleResolutionDownBy = document.getElementById('e0_scaleResolutionDownById');
+const e0_maxBitrate = document.getElementById('e0_maxBitrateId');
 const e0_active = document.getElementById('e0_activeId');
 const e1_scalabilityMode = document.getElementById('e1_scalabilityModeId');
 const e1_scaleResolutionDownBy = document.getElementById('e1_scaleResolutionDownById');
+const e1_maxBitrate = document.getElementById('e1_maxBitrateId');
 const e1_active = document.getElementById('e1_activeId');
 const e2_scalabilityMode = document.getElementById('e2_scalabilityModeId');
 const e2_scaleResolutionDownBy = document.getElementById('e2_scaleResolutionDownById');
+const e2_maxBitrate = document.getElementById('e2_maxBitrateId');
 const e2_active = document.getElementById('e2_activeId');
 const encodings_scalabilityMode = [
   e0_scalabilityMode, e1_scalabilityMode, e2_scalabilityMode
@@ -23,6 +27,9 @@ const encodings_scaleResolutionDownBy = [
 ];
 const encodings_active = [
   e0_active, e1_active, e2_active
+];
+const encodings_maxBitrate = [
+  e0_maxBitrate, e1_maxBitrate, e2_maxBitrate
 ];
 const encodingStatusParagraph = document.getElementById('encodingStatusParagraphId');
 
@@ -218,11 +225,23 @@ function setValueAndMaybeHighlight(element, value) {
 function clearHighlighting() {
   for (const elements of
        [encodings_scalabilityMode, encodings_scaleResolutionDownBy,
-        encodings_active]) {
+        encodings_maxBitrate, encodings_active]) {
     for (const element of elements) {
       element.classList.remove('highlightColor');
     }
   }
+}
+
+function toggleMaxBitrateTweak() {
+  e0_maxBitrate.disabled = checkboxMaxBitrateTweak.checked;
+  e1_maxBitrate.disabled = checkboxMaxBitrateTweak.checked;
+  e2_maxBitrate.disabled = checkboxMaxBitrateTweak.checked;
+  if (!checkboxMaxBitrateTweak.checked) {
+    setValueAndMaybeHighlight(e0_maxBitrate, '');
+    setValueAndMaybeHighlight(e1_maxBitrate, '');
+    setValueAndMaybeHighlight(e2_maxBitrate, '');
+  }
+  onEncodingsChanged('triggerPresets');
 }
 
 async function onEncodingsChanged(optionsStr) {
@@ -246,6 +265,11 @@ async function onEncodingsChanged(optionsStr) {
       setValueAndMaybeHighlight(e1_active, 'false');
       setValueAndMaybeHighlight(e2_scaleResolutionDownBy, '');
       setValueAndMaybeHighlight(e2_active, 'false');
+      if (checkboxMaxBitrateTweak.checked) {
+        setValueAndMaybeHighlight(e0_maxBitrate, '');
+        setValueAndMaybeHighlight(e1_maxBitrate, '');
+        setValueAndMaybeHighlight(e2_maxBitrate, '');
+      }
     } else {
       setValueAndMaybeHighlight(e0_scaleResolutionDownBy, '4');
       setValueAndMaybeHighlight(e0_active, 'true');
@@ -253,6 +277,11 @@ async function onEncodingsChanged(optionsStr) {
       setValueAndMaybeHighlight(e1_active, 'true');
       setValueAndMaybeHighlight(e2_scaleResolutionDownBy, '1');
       setValueAndMaybeHighlight(e2_active, 'true');
+      if (checkboxMaxBitrateTweak.checked) {
+        setValueAndMaybeHighlight(e0_maxBitrate, 69);
+        setValueAndMaybeHighlight(e1_maxBitrate, 342);
+        setValueAndMaybeHighlight(e2_maxBitrate, 1673);
+      }
     }
   }
   if (pc1 == null) {
@@ -260,7 +289,8 @@ async function onEncodingsChanged(optionsStr) {
   }
   const sender = pc1.getSenders()[0];
   const params = sender.getParameters();
-  const newEncodings = getEncodingsFromHtml(/*deleteUndefiend=*/false);
+  const newEncodings =
+      getEncodingsFromHtml(/*deleteUndefinedScaleDownBy=*/false);
   for (let i = 0; i < 3; ++i) {
     for (let attribute in newEncodings[i]) {
       params.encodings[i][attribute] = newEncodings[i][attribute];
@@ -277,7 +307,7 @@ async function onEncodingsChanged(optionsStr) {
   }
 }
 
-function getEncodingsFromHtml(deleteUndefined = true) {
+function getEncodingsFromHtml(deleteUndefinedScaleDownBy = true) {
   const encodings = [];
   for (let i = 0; i < 3; ++i) {
     encodings.push({});
@@ -285,11 +315,19 @@ function getEncodingsFromHtml(deleteUndefined = true) {
     encodings[i].scaleResolutionDownBy =
         parseFloat(encodings_scaleResolutionDownBy[i].value);
     if (isNaN(encodings[i].scaleResolutionDownBy)) {
-      if (deleteUndefined) {
+      if (deleteUndefinedScaleDownBy) {
         delete encodings[i].scaleResolutionDownBy;
       } else {
         encodings[i].scaleResolutionDownBy = undefined;
       }
+    }
+    encodings[i].maxBitrate =
+        parseFloat(encodings_maxBitrate[i].value);
+    if (isNaN(encodings[i].maxBitrate) ||
+        typeof encodings[i].maxBitrate !== 'number') {
+      delete encodings[i].maxBitrate;
+    } else {
+      encodings[i].maxBitrate = encodings[i].maxBitrate * 1000;  // kbps -> bps
     }
     encodings[i].active = (encodings_active[i].value == 'true');
   }

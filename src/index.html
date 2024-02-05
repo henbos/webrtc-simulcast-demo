@@ -18,6 +18,8 @@
     </select>
     <button onclick="onStart()">Start</button>
     <button onclick="onStop()">Stop</button>
+    <input type="checkbox" id="checkboxMaxBitrateTweakId" name="checkboxMaxBitrateTweak" value="" onclick="toggleMaxBitrateTweak()"/>
+    <label for="checkboxMaxBitrateTweak">Apply maxBitrate tweak</label>
   </p>
   <p>
     <label for="offerInputId">Base64 Offer:</label>
@@ -43,6 +45,8 @@
         </select><br/>
         <label class="paramLabel" for="e0_scaleResolutionDownBy">scaleResolutionDownBy:</label>
         <input class="paramInput" type="text" id="e0_scaleResolutionDownById" name="e0_scaleResolutionDownBy" value="4" oninput="onEncodingsChanged()"><br/>
+        <label class="paramLabel" for="e0_maxBitrate">maxBitrate in kbps:</label>
+        <input class="paramInput" type="text" id="e0_maxBitrateId" name="e0_maxBitrate" oninput="onEncodingsChanged()"><br/>
         <label class="paramLabel" for="e0_active">active:</label>
         <select class="paramInput" id="e0_activeId" name="e0_active" onchange="onEncodingsChanged()">
           <option value="true">true</option>
@@ -64,6 +68,8 @@
         </select><br/>
         <label class="paramLabel" for="e1_scaleResolutionDownBy">scaleResolutionDownBy:</label>
         <input class="paramInput" type="text" id="e1_scaleResolutionDownById" name="e1_scaleResolutionDownBy" value="2" oninput="onEncodingsChanged()"><br/>
+        <label class="paramLabel" for="e1_maxBitrate">maxBitrate in kbps:</label>
+        <input class="paramInput" type="text" id="e1_maxBitrateId" name="e1_maxBitrate" oninput="onEncodingsChanged()"><br/>
         <label class="paramLabel" for="e1_active">active:</label>
         <select class="paramInput" id="e1_activeId" name="e1_active" onchange="onEncodingsChanged()">
           <option value="true">true</option>
@@ -85,6 +91,8 @@
         </select><br/>
         <label class="paramLabel" for="e2_scaleResolutionDownBy">scaleResolutionDownBy:</label>
         <input class="paramInput" type="text" id="e2_scaleResolutionDownById" name="e2_scaleResolutionDownBy" value="1" oninput="onEncodingsChanged()"><br/>
+        <label class="paramLabel" for="e2_maxBitrate">maxBitrate in kbps:</label>
+        <input class="paramInput" type="text" id="e2_maxBitrateId" name="e2_maxBitrate" oninput="onEncodingsChanged()"><br/>
         <label class="paramLabel" for="e2_active">active:</label>
         <select class="paramInput" id="e2_activeId" name="e2_active" onchange="onEncodingsChanged()">
           <option value="true">true</option>
