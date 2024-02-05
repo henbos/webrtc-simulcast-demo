@@ -71,6 +71,7 @@ function onStop() {
   offerInput.disabled = true;
   answerInput.value = '';
   answerInput.disabled = true;
+  checkboxMaxBitrateTweak.disabled = false;
   statusParagraph.innerText = '';
   encodingsTable.className = '';
   for (let i = 0; i < recvVideos.length; ++i) {
@@ -102,6 +103,7 @@ async function onStart(doStop = true) {
   }
   if (role == 'receiver') {
     offerInput.disabled = false;
+    checkboxMaxBitrateTweak.disabled = true;
     encodingsTable.className = 'hide';
   }
 
