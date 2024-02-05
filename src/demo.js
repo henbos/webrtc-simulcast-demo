@@ -39,7 +39,8 @@ const recvVideoParagraphs =
 let pc1 = null;
 let pc2 = null;
 let track = null;
-let prevOutboundRtpsByRid = null;
+const pc1PrevStatsReport = new Map();
+const pc2PrevStatsReport = new Map();
 
 function onStop() {
   if (pc1) {
@@ -50,7 +51,8 @@ function onStop() {
     pc2.close();
     pc2 = null;
   }
-  prevOutboundRtpsByRid = null;
+  pc1PrevStatsReport.clear();
+  pc2PrevStatsReport.clear();
   if (track) {
     track.stop();
     track = null;
@@ -203,7 +205,8 @@ async function renegotiate() {
   preferCodec(transceiver,
               codecSelect.options[codecSelect.selectedIndex].value);
   await negotiateWithSimulcastTweaks(pc1, pc2);
-  prevOutboundRtpsByRid = null;
+  pc1PrevStatsReport.clear();
+  pc2PrevStatsReport.clear();
 }
 
 function setValueAndMaybeHighlight(element, value) {
@@ -319,21 +322,33 @@ async function pollGetStats() {
       outboundRtpsByRid.set(stats.rid, stats);
     }
     let statusStr = 'Sender Stats\n\n';
+    let qpStr = '';
     for (let i = 0; i < 3; ++i) {
       if (i != 0) {
         statusStr += '\n';
+        qpStr += ', ';
       }
-      statusStr += outboundRtpToString(
-          report, outboundRtpsByRid.get(`${i}`),
-          prevOutboundRtpsByRid?.get(`${i}`));
+      const outboundRtp = outboundRtpsByRid.get(`${i}`);
+      const prevOutboundRtp = pc1PrevStatsReport.get(outboundRtp.id);
+      statusStr += outboundRtpToString(report, outboundRtp, prevOutboundRtp);
+      if (prevOutboundRtp &&
+          outboundRtp.framesEncoded > prevOutboundRtp.framesEncoded) {
+        qpStr += Math.round(
+            (outboundRtp.qpSum - prevOutboundRtp.qpSum) /
+            (outboundRtp.framesEncoded - prevOutboundRtp.framesEncoded));
+      } else {
+        qpStr += 'N/A';
+      }
     }
+    const reason =
+        outboundRtpsByRid.get('0')?.qualityLimitationReason ?? 'none';
+    statusStr += `\n\nLimited by ${reason} (QP values: ${qpStr}).`;
     statusParagraph.innerText = statusStr;
 
-    const qualityLimitationReason =
-        outboundRtpsByRid.get('0')?.qualityLimitationReason ?? 'none';
-    statusParagraph.innerText += `\n\nLimited by ${qualityLimitationReason}.`;
-
-    prevOutboundRtpsByRid = outboundRtpsByRid;
+    pc1PrevStatsReport.clear();
+    for (const stats of report.values()) {
+      pc1PrevStatsReport.set(stats.id, stats);
+    }
   }
   if (pc2 !== null) {
     const report = await pc2.getStats();
@@ -343,11 +358,17 @@ async function pollGetStats() {
         continue;
       }
       const recvVideoParagraph = recvVideoParagraphs[stats.mid];
-      recvVideoParagraph.innerText = inboundRtpToString(report, stats);
+      recvVideoParagraph.innerText = inboundRtpToString(
+          report, stats, pc2PrevStatsReport.get(stats.id));
       bytesReceived += stats.bytesReceived ?? 0;
     }
     if (pc1 === null && bytesReceived > 0) {
       statusParagraph.innerText = '';
+    }
+
+    pc2PrevStatsReport.clear();
+    for (const stats of report.values()) {
+      pc2PrevStatsReport.set(stats.id, stats);
     }
   }
   setTimeout(pollGetStats, 1000);
@@ -372,14 +393,21 @@ function outboundRtpToString(report, outboundRtp, prevOutboundRtp) {
     codec = codecStats.mimeType.substring(codecStats.mimeType.indexOf('/') + 1);
   }
   let str = `rid:${outboundRtp.rid}`;
-  if (codec && outboundRtp.frameWidth && outboundRtp.frameHeight &&
+  str += ` ${codec} ${outboundRtp.scalabilityMode} ${simplifyEncoderString(
+      outboundRtp.rid, outboundRtp.encoderImplementation)}`;
+  if (outboundRtp.frameWidth && outboundRtp.frameHeight &&
       outboundRtp.framesPerSecond) {
     str +=
-        ` ${codec} ${outboundRtp.frameWidth}x${outboundRtp.frameHeight}` +
-        `@${outboundRtp.framesPerSecond} ${outboundRtp.scalabilityMode}`;
+        ` ${outboundRtp.frameWidth}x${outboundRtp.frameHeight}` +
+        ` @ ${outboundRtp.framesPerSecond} fps`;
   }
-  str += ` ${simplifyEncoderString(
-      outboundRtp.rid, outboundRtp.encoderImplementation)}`;
+  if (prevOutboundRtp) {
+    str += ` @ target ${Math.round(outboundRtp.targetBitrate / 1000)}`
+    const bytesPerSecond =
+        (outboundRtp.bytesSent - prevOutboundRtp.bytesSent) /
+        (outboundRtp.timestamp - prevOutboundRtp.timestamp) * 1000;
+    str += ` actual ${Math.round(bytesPerSecond * 8 / 1000)} kbps`;
+  }
   return str;
 }
 
@@ -401,20 +429,18 @@ function simplifyEncoderString(rid, encoderImplementation) {
   return encoderImplementation;
 }
 
-function inboundRtpToString(report, inboundRtp) {
-  let str = '';
-  let codec = null;
-  if (inboundRtp.codecId) {
-    const codecStats = report.get(inboundRtp.codecId);
-    codec = codecStats.mimeType.substring(codecStats.mimeType.indexOf('/') + 1);
+function inboundRtpToString(report, inboundRtp, prevInboundRtp) {
+  if (!inboundRtp.frameWidth || !inboundRtp.frameHeight ||
+      !inboundRtp.framesPerSecond) {
+    return '';
   }
-  if (codec && inboundRtp.frameWidth && inboundRtp.frameHeight &&
-      inboundRtp.framesPerSecond) {
-    str += `${codec} ${inboundRtp.frameWidth}x${inboundRtp.frameHeight}` +
-           `@${inboundRtp.framesPerSecond}`;
-  } else {
-    str += 'N/A';
+  let str = `${inboundRtp.frameWidth}x${inboundRtp.frameHeight} ` +
+            ` @ ${inboundRtp.framesPerSecond} fps`;
+  if (prevInboundRtp) {
+    const bytesPerSecond =
+        (inboundRtp.bytesReceived - prevInboundRtp.bytesReceived) /
+        (inboundRtp.timestamp - prevInboundRtp.timestamp) * 1000;
+    str += ` @ ${Math.round(bytesPerSecond * 8 / 1000)} kbps`;
   }
-  str += `\nReceived: ${Math.ceil((inboundRtp.bytesReceived ?? 0) / 1000)} kB`;
   return str;
 }

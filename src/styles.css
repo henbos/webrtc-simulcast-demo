@@ -2,6 +2,10 @@
   font-family: "Lucida Console", "Courier New", monospace;
 }
 
+td {
+  vertical-align: top;
+}
+
 video {
   width: 320px;
 }
