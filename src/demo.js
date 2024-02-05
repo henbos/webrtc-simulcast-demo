@@ -290,7 +290,7 @@ async function onEncodingsChanged(optionsStr) {
   const sender = pc1.getSenders()[0];
   const params = sender.getParameters();
   const newEncodings =
-      getEncodingsFromHtml(/*deleteUndefinedScaleDownBy=*/false);
+      getEncodingsFromHtml(/*deleteUndefined=*/false);
   for (let i = 0; i < 3; ++i) {
     for (let attribute in newEncodings[i]) {
       params.encodings[i][attribute] = newEncodings[i][attribute];
@@ -307,7 +307,7 @@ async function onEncodingsChanged(optionsStr) {
   }
 }
 
-function getEncodingsFromHtml(deleteUndefinedScaleDownBy = true) {
+function getEncodingsFromHtml(deleteUndefined = true) {
   const encodings = [];
   for (let i = 0; i < 3; ++i) {
     encodings.push({});
@@ -315,7 +315,7 @@ function getEncodingsFromHtml(deleteUndefinedScaleDownBy = true) {
     encodings[i].scaleResolutionDownBy =
         parseFloat(encodings_scaleResolutionDownBy[i].value);
     if (isNaN(encodings[i].scaleResolutionDownBy)) {
-      if (deleteUndefinedScaleDownBy) {
+      if (deleteUndefined) {
         delete encodings[i].scaleResolutionDownBy;
       } else {
         encodings[i].scaleResolutionDownBy = undefined;
@@ -325,7 +325,11 @@ function getEncodingsFromHtml(deleteUndefinedScaleDownBy = true) {
         parseFloat(encodings_maxBitrate[i].value);
     if (isNaN(encodings[i].maxBitrate) ||
         typeof encodings[i].maxBitrate !== 'number') {
-      delete encodings[i].maxBitrate;
+      if (deleteUndefined) {
+        delete encodings[i].maxBitrate;
+      } else {
+        encodings[i].maxBitrate = undefined;
+      }
     } else {
       encodings[i].maxBitrate = encodings[i].maxBitrate * 1000;  // kbps -> bps
     }
