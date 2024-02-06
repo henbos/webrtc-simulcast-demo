@@ -377,9 +377,9 @@ async function pollGetStats() {
         qpStr += ', ';
       }
       const outboundRtp = outboundRtpsByRid.get(`${i}`);
-      const prevOutboundRtp = pc1PrevStatsReport.get(outboundRtp.id);
+      const prevOutboundRtp = pc1PrevStatsReport.get(outboundRtp?.id);
 
-      totalSendBytes += outboundRtp.bytesSent;
+      totalSendBytes += outboundRtp?.bytesSent ?? 0;
       if (prevOutboundRtp) {
         prevTotalSendBytes += prevOutboundRtp.bytesSent;
         // The delta of all RTP stats objects should be the same so it doesn't
@@ -388,7 +388,7 @@ async function pollGetStats() {
       }
 
       statusStr += outboundRtpToString(report, outboundRtp, prevOutboundRtp);
-      if (prevOutboundRtp &&
+      if (prevOutboundRtp && outboundRtp &&
           outboundRtp.framesEncoded > prevOutboundRtp.framesEncoded) {
         qpStr += Math.round(
             (outboundRtp.qpSum - prevOutboundRtp.qpSum) /
