@@ -341,7 +341,7 @@ function getEncodingsFromHtml(deleteUndefined = true) {
 }
 
 function preferCodec(transceiver, codec) {
-  const preferredCodecs = RTCRtpSender.getCapabilities('video').codecs;
+  const preferredCodecs = RTCRtpReceiver.getCapabilities('video').codecs;
   for (let i = 0; i < preferredCodecs.length; ++i) {
     if (!preferredCodecs[i].mimeType.endsWith(codec)) {
       continue;
