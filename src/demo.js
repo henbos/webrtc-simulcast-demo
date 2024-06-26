@@ -66,10 +66,10 @@ function configScreenshare() {
   e0_active.value = e1_active.value = true;
   e2_active.value = false;
   e0_scaleResolutionDownBy.value = e1_scaleResolutionDownBy.value = 1;
-  e0_maxfps.value = 30;
-  e1_maxfps.value = 5;
-  e0_maxBitrate.value = 2500;
-  e1_maxBitrate.value = 420;
+  e1_maxfps.value = 30;
+  e0_maxfps.value = 5;
+  e1_maxBitrate.value = 2500;
+  e0_maxBitrate.value = 420;
   sourceSelect.value = "gdm";
   contentHintSelect.value = "detail";
 }
