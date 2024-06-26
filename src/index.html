@@ -6,6 +6,11 @@
 </head>
 <body>
   <p>
+    <label class="paramLabel" for="s_minfps">Config presets:</label>
+    <button onclick="onConfigAV1Screenshare3030()">AV1 Screenshare 30/30</button>
+    <button onclick="onConfigVP8Screenshare3030()">VP8 Screenshare 30/30</button>
+  </p>
+  <p>
     <select name="codec" id="codecSelectId" onchange="renegotiate()">
       <option value="VP9">VP9</option>
       <option value="VP8">VP8</option>
@@ -17,10 +22,26 @@
       <option value="sender">sender</option>
       <option value="receiver">receiver</option>
     </select>
+    <select name="source" id="sourceId">
+      <option value="gum">gUM</option>
+      <option value="gdm">gDM</option>
+    </select>
+    <select name="contentHint" id="contentHintId">
+      <option value="">Default</option>
+      <option value="motion">Motion</option>
+      <option value="detail">Detail</option>
+      <option value="text">Text</option>
+    </select>
     <button onclick="onStart()">Start</button>
     <button onclick="onStop()">Stop</button>
     <input type="checkbox" id="checkboxMaxBitrateTweakId" name="checkboxMaxBitrateTweak" value="" onclick="toggleMaxBitrateTweak()"/>
     <label for="checkboxMaxBitrateTweak">Apply maxBitrate tweak</label>
+  </p>
+  <p>
+    <label class="paramLabel" for="s_minfps">Source min FPS:</label>
+    <input class="paramInput" type="text" id="s_minfpsid" name="s_minfps"><br/>
+    <label class="paramLabel" for="s_maxfps">Source max FPS:</label>
+    <input class="paramInput" type="text" id="s_maxfpsid" name="s_maxfps"><br/>
   </p>
   <p>
     <label for="offerInputId">Base64 Offer:</label>
@@ -32,6 +53,8 @@
   <table id="encodingsTableId">
     <tr>
       <td>
+        <label class="paramLabel" for="e0_maxfps">Max FPS:</label>
+        <input class="paramInput" type="text" id="e0_maxfpsid" name="e0_maxfps"><br/>
         <label class="paramLabel" for="e0_rid">rid:</label>
         <input class="paramInput" type="text" id="e0_ridId" name="e0_rid" disabled="true" value="0"><br/>
         <label class="paramLabel" for="e0_scalabilityMode">scalabilityMode:</label>
@@ -55,6 +78,8 @@
         </select><br/>
       </td>
       <td>
+        <label class="paramLabel" for="e1_maxfps">Max FPS:</label>
+        <input class="paramInput" type="text" id="e1_maxfpsid" name="e1_maxfps"><br/>
         <label class="paramLabel" for="e1_rid">rid:</label>
         <input class="paramInput" type="text" id="e1_ridId" name="e1_rid" disabled="true" value="1"><br/>
         <label class="paramLabel" for="e1_scalabilityMode">scalabilityMode:</label>
@@ -78,6 +103,8 @@
         </select><br/>
       </td>
       <td>
+        <label class="paramLabel" for="e2_maxfps">Max FPS:</label>
+        <input class="paramInput" type="text" id="e2_maxfpsid" name="e2_maxfps"><br/>
         <label class="paramLabel" for="e2_rid">rid:</label>
         <input class="paramInput" type="text" id="e2_ridId" name="e2_rid" disabled="true" value="2"><br/>
         <label class="paramLabel" for="e2_scalabilityMode">scalabilityMode:</label>

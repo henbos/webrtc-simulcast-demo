@@ -1,20 +1,28 @@
 const codecSelect = document.getElementById('codecSelectId');
+const sourceSelect = document.getElementById('sourceId');
 const roleSelect = document.getElementById('roleSelectId');
+const contentHintSelect = document.getElementById('contentHintId');
 const offerInput = document.getElementById('offerInputId');
 const answerInput = document.getElementById('answerInputId');
 const checkboxMaxBitrateTweak = document.getElementById('checkboxMaxBitrateTweakId');
 
 const statusParagraph = document.getElementById('statusParagraphId');
 
+const s_minfps = document.getElementById('s_minfpsid');
+const s_maxfps = document.getElementById('s_maxfpsid');
+
 const encodingsTable = document.getElementById('encodingsTableId');
+const e0_maxfps = document.getElementById('e0_maxfpsid');
 const e0_scalabilityMode = document.getElementById('e0_scalabilityModeId');
 const e0_scaleResolutionDownBy = document.getElementById('e0_scaleResolutionDownById');
 const e0_maxBitrate = document.getElementById('e0_maxBitrateId');
 const e0_active = document.getElementById('e0_activeId');
+const e1_maxfps = document.getElementById('e1_maxfpsid');
 const e1_scalabilityMode = document.getElementById('e1_scalabilityModeId');
 const e1_scaleResolutionDownBy = document.getElementById('e1_scaleResolutionDownById');
 const e1_maxBitrate = document.getElementById('e1_maxBitrateId');
 const e1_active = document.getElementById('e1_activeId');
+const e2_maxfps = document.getElementById('e2_maxfpsid');
 const e2_scalabilityMode = document.getElementById('e2_scalabilityModeId');
 const e2_scaleResolutionDownBy = document.getElementById('e2_scaleResolutionDownById');
 const e2_maxBitrate = document.getElementById('e2_maxBitrateId');
@@ -30,6 +38,9 @@ const encodings_active = [
 ];
 const encodings_maxBitrate = [
   e0_maxBitrate, e1_maxBitrate, e2_maxBitrate
+];
+const encodings_maxfps = [
+  e0_maxfps, e1_maxfps, e2_maxfps
 ];
 const encodingStatusParagraph = document.getElementById('encodingStatusParagraphId');
 
@@ -48,6 +59,30 @@ let pc2 = null;
 let track = null;
 const pc1PrevStatsReport = new Map();
 const pc2PrevStatsReport = new Map();
+
+function configScreenshare() {
+  s_maxfps.value = s_minfps.value = 30;
+  e0_scalabilityMode.value = e1_scalabilityMode.value = "L1T2";
+  e0_active.value = e1_active.value = true;
+  e2_active.value = false;
+  e0_scaleResolutionDownBy.value = e1_scaleResolutionDownBy.value = 1;
+  e0_maxfps.value = 30;
+  e1_maxfps.value = 5;
+  e0_maxBitrate.value = 2500;
+  e1_maxBitrate.value = 420;
+  sourceSelect.value = "gdm";
+  contentHintSelect.value = "detail";
+}
+
+function onConfigAV1Screenshare3030() {
+  configScreenshare();
+  codecSelect.value = "AV1";
+}
+
+function onConfigVP8Screenshare3030() {
+  configScreenshare();
+  codecSelect.value = "VP8";
+}
 
 function onStop() {
   if (pc1) {
@@ -79,6 +114,32 @@ function onStop() {
     recvVideoParagraphs[i].innerText = '';
   }
   clearHighlighting();
+}
+
+async function getStream() {
+  const role = sourceSelect.options[sourceSelect.selectedIndex].value;
+  if (role === "gum") {
+    return navigator.mediaDevices.getUserMedia({video:{
+      width:1280, height:720
+    }});
+  } else {
+    return navigator.mediaDevices.getDisplayMedia({video: true});
+  }
+}
+
+async function applyConstraints(track) {
+  let framerateConstraints = {};
+  const maxfps = parseFloat(s_maxfps.value);
+  if (!isNaN(maxfps) && typeof maxfps === 'number') {
+    framerateConstraints.max = maxfps;
+  }
+  const minfps = parseFloat(s_minfps.value);
+  if (!isNaN(minfps) && typeof minfps === 'number') {
+    framerateConstraints.min = minfps;
+  }
+  if (Object.keys(framerateConstraints).length !== 0) {
+    await track.applyConstraints({frameRate: framerateConstraints});
+  }
 }
 
 async function onStart(doStop = true) {
@@ -117,10 +178,12 @@ async function onStart(doStop = true) {
           }
         });
 
-    const stream = await navigator.mediaDevices.getUserMedia({video:{
-      width:1280, height:720
-    }});
+    const stream = await getStream();
     track = stream.getTracks()[0];
+    await applyConstraints(track);
+    if (contentHintSelect.value !== "") {
+      track.contentHint = contentHintSelect.value;
+    }
     const transceiver =
         pc1.addTransceiver(track, {sendEncodings:getEncodingsFromHtml()});
     preferCodec(transceiver,
@@ -335,6 +398,17 @@ function getEncodingsFromHtml(deleteUndefined = true) {
     } else {
       encodings[i].maxBitrate = encodings[i].maxBitrate * 1000;  // kbps -> bps
     }
+
+    encodings[i].maxFramerate = parseFloat(encodings_maxfps[i].value);
+    if (isNaN(encodings[i].maxFramerate) ||
+      typeof encodings[i].maxFramerate !== 'number') {
+      if (deleteUndefined) {
+        delete encodings[i].maxFramerate;
+      } else {
+        encodings[i].maxFramerate = undefined;
+      }
+    }
+
     encodings[i].active = (encodings_active[i].value == 'true');
   }
   return encodings;
@@ -432,7 +506,7 @@ async function pollGetStats() {
       pc2PrevStatsReport.set(stats.id, stats);
     }
   }
-  setTimeout(pollGetStats, 1000);
+  setTimeout(pollGetStats, 5000);
 }
 pollGetStats();
 
