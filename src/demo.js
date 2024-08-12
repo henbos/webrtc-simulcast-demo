@@ -4,7 +4,6 @@ const roleSelect = document.getElementById('roleSelectId');
 const contentHintSelect = document.getElementById('contentHintId');
 const offerInput = document.getElementById('offerInputId');
 const answerInput = document.getElementById('answerInputId');
-const checkboxMaxBitrateTweak = document.getElementById('checkboxMaxBitrateTweakId');
 
 const statusParagraph = document.getElementById('statusParagraphId');
 
@@ -106,7 +105,6 @@ function onStop() {
   offerInput.disabled = true;
   answerInput.value = '';
   answerInput.disabled = true;
-  checkboxMaxBitrateTweak.disabled = false;
   statusParagraph.innerText = '';
   encodingsTable.className = '';
   for (let i = 0; i < recvVideos.length; ++i) {
@@ -164,7 +162,6 @@ async function onStart(doStop = true) {
   }
   if (role == 'receiver') {
     offerInput.disabled = false;
-    checkboxMaxBitrateTweak.disabled = true;
     encodingsTable.className = 'hide';
   }
 
@@ -297,18 +294,6 @@ function clearHighlighting() {
   }
 }
 
-function toggleMaxBitrateTweak() {
-  e0_maxBitrate.disabled = checkboxMaxBitrateTweak.checked;
-  e1_maxBitrate.disabled = checkboxMaxBitrateTweak.checked;
-  e2_maxBitrate.disabled = checkboxMaxBitrateTweak.checked;
-  if (!checkboxMaxBitrateTweak.checked) {
-    setValueAndMaybeHighlight(e0_maxBitrate, '');
-    setValueAndMaybeHighlight(e1_maxBitrate, '');
-    setValueAndMaybeHighlight(e2_maxBitrate, '');
-  }
-  onEncodingsChanged('triggerPresets');
-}
-
 async function onEncodingsChanged(optionsStr) {
   clearHighlighting();
   if (optionsStr == 'triggerPresets') {
@@ -330,11 +315,6 @@ async function onEncodingsChanged(optionsStr) {
       setValueAndMaybeHighlight(e1_active, 'false');
       setValueAndMaybeHighlight(e2_scaleResolutionDownBy, '');
       setValueAndMaybeHighlight(e2_active, 'false');
-      if (checkboxMaxBitrateTweak.checked) {
-        setValueAndMaybeHighlight(e0_maxBitrate, '');
-        setValueAndMaybeHighlight(e1_maxBitrate, '');
-        setValueAndMaybeHighlight(e2_maxBitrate, '');
-      }
     } else {
       setValueAndMaybeHighlight(e0_scaleResolutionDownBy, '4');
       setValueAndMaybeHighlight(e0_active, 'true');
@@ -342,11 +322,6 @@ async function onEncodingsChanged(optionsStr) {
       setValueAndMaybeHighlight(e1_active, 'true');
       setValueAndMaybeHighlight(e2_scaleResolutionDownBy, '1');
       setValueAndMaybeHighlight(e2_active, 'true');
-      if (checkboxMaxBitrateTweak.checked) {
-        setValueAndMaybeHighlight(e0_maxBitrate, 69);
-        setValueAndMaybeHighlight(e1_maxBitrate, 342);
-        setValueAndMaybeHighlight(e2_maxBitrate, 1673);
-      }
     }
   }
   if (pc1 == null) {
