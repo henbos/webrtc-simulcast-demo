@@ -9,6 +9,7 @@
     <label class="paramLabel" for="s_minfps">Config presets:</label>
     <button onclick="onConfigAV1Screenshare3030()">AV1 Screenshare 30/30</button>
     <button onclick="onConfigVP8Screenshare3030()">VP8 Screenshare 30/30</button>
+    <button onclick="onConfigVP9ScaleTo()">VP9 scaleResolutionDownTo</button>
   </p>
   <p>
     <select name="codec" id="codecSelectId" onchange="renegotiate()">
@@ -67,6 +68,8 @@
         </select><br/>
         <label class="paramLabel" for="e0_scaleResolutionDownBy">scaleResolutionDownBy:</label>
         <input class="paramInput" type="text" id="e0_scaleResolutionDownById" name="e0_scaleResolutionDownBy" value="4" oninput="onEncodingsChanged()"><br/>
+        <label class="paramLabel" for="e0_scaleResolutionDownTo">scaleResolutionDownTo:</label>
+        <input class="paramInput" type="text" id="e0_scaleResolutionDownToId" name="e0_scaleResolutionDownTo" oninput="onEncodingsChanged()"><br/>
         <label class="paramLabel" for="e0_maxBitrate">maxBitrate in kbps:</label>
         <input class="paramInput" type="text" id="e0_maxBitrateId" name="e0_maxBitrate" oninput="onEncodingsChanged()"><br/>
         <label class="paramLabel" for="e0_active">active:</label>
@@ -92,6 +95,8 @@
         </select><br/>
         <label class="paramLabel" for="e1_scaleResolutionDownBy">scaleResolutionDownBy:</label>
         <input class="paramInput" type="text" id="e1_scaleResolutionDownById" name="e1_scaleResolutionDownBy" value="2" oninput="onEncodingsChanged()"><br/>
+        <label class="paramLabel" for="e1_scaleResolutionDownTo">scaleResolutionDownTo:</label>
+        <input class="paramInput" type="text" id="e1_scaleResolutionDownToId" name="e1_scaleResolutionDownTo" oninput="onEncodingsChanged()"><br/>
         <label class="paramLabel" for="e1_maxBitrate">maxBitrate in kbps:</label>
         <input class="paramInput" type="text" id="e1_maxBitrateId" name="e1_maxBitrate" oninput="onEncodingsChanged()"><br/>
         <label class="paramLabel" for="e1_active">active:</label>
@@ -117,6 +122,8 @@
         </select><br/>
         <label class="paramLabel" for="e2_scaleResolutionDownBy">scaleResolutionDownBy:</label>
         <input class="paramInput" type="text" id="e2_scaleResolutionDownById" name="e2_scaleResolutionDownBy" value="1" oninput="onEncodingsChanged()"><br/>
+        <label class="paramLabel" for="e2_scaleResolutionDownTo">scaleResolutionDownTo:</label>
+        <input class="paramInput" type="text" id="e2_scaleResolutionDownToId" name="e2_scaleResolutionDownTo" oninput="onEncodingsChanged()"><br/>
         <label class="paramLabel" for="e2_maxBitrate">maxBitrate in kbps:</label>
         <input class="paramInput" type="text" id="e2_maxBitrateId" name="e2_maxBitrate" oninput="onEncodingsChanged()"><br/>
         <label class="paramLabel" for="e2_active">active:</label>
