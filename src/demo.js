@@ -14,16 +14,19 @@ const encodingsTable = document.getElementById('encodingsTableId');
 const e0_maxfps = document.getElementById('e0_maxfpsid');
 const e0_scalabilityMode = document.getElementById('e0_scalabilityModeId');
 const e0_scaleResolutionDownBy = document.getElementById('e0_scaleResolutionDownById');
+const e0_scaleResolutionDownTo = document.getElementById('e0_scaleResolutionDownToId');
 const e0_maxBitrate = document.getElementById('e0_maxBitrateId');
 const e0_active = document.getElementById('e0_activeId');
 const e1_maxfps = document.getElementById('e1_maxfpsid');
 const e1_scalabilityMode = document.getElementById('e1_scalabilityModeId');
 const e1_scaleResolutionDownBy = document.getElementById('e1_scaleResolutionDownById');
+const e1_scaleResolutionDownTo = document.getElementById('e1_scaleResolutionDownToId');
 const e1_maxBitrate = document.getElementById('e1_maxBitrateId');
 const e1_active = document.getElementById('e1_activeId');
 const e2_maxfps = document.getElementById('e2_maxfpsid');
 const e2_scalabilityMode = document.getElementById('e2_scalabilityModeId');
 const e2_scaleResolutionDownBy = document.getElementById('e2_scaleResolutionDownById');
+const e2_scaleResolutionDownTo = document.getElementById('e2_scaleResolutionDownToId');
 const e2_maxBitrate = document.getElementById('e2_maxBitrateId');
 const e2_active = document.getElementById('e2_activeId');
 const encodings_scalabilityMode = [
@@ -31,6 +34,9 @@ const encodings_scalabilityMode = [
 ];
 const encodings_scaleResolutionDownBy = [
   e0_scaleResolutionDownBy, e1_scaleResolutionDownBy, e2_scaleResolutionDownBy
+];
+const encodings_scaleResolutionDownTo = [
+  e0_scaleResolutionDownTo, e1_scaleResolutionDownTo, e2_scaleResolutionDownTo
 ];
 const encodings_active = [
   e0_active, e1_active, e2_active
@@ -81,6 +87,18 @@ function onConfigAV1Screenshare3030() {
 function onConfigVP8Screenshare3030() {
   configScreenshare();
   codecSelect.value = "VP8";
+}
+function onConfigVP9ScaleTo() {
+  codecSelect.value = "VP9";
+  setValueAndMaybeHighlight(e0_scaleResolutionDownBy, '');
+  setValueAndMaybeHighlight(e0_scaleResolutionDownTo, '320x180');
+  setValueAndMaybeHighlight(e0_active, 'true');
+  setValueAndMaybeHighlight(e1_scaleResolutionDownBy, '');
+  setValueAndMaybeHighlight(e1_scaleResolutionDownTo, '640x360');
+  setValueAndMaybeHighlight(e1_active, 'true');
+  setValueAndMaybeHighlight(e2_scaleResolutionDownBy, '');
+  setValueAndMaybeHighlight(e2_scaleResolutionDownTo, '1280x720');
+  setValueAndMaybeHighlight(e2_active, 'true');
 }
 
 function onStop() {
@@ -323,6 +341,11 @@ async function onEncodingsChanged(optionsStr) {
       setValueAndMaybeHighlight(e2_scaleResolutionDownBy, '1');
       setValueAndMaybeHighlight(e2_active, 'true');
     }
+    if (e0_scaleResolutionDownTo.value != '') {
+      setValueAndMaybeHighlight(e0_scaleResolutionDownBy, '');
+      setValueAndMaybeHighlight(e1_scaleResolutionDownBy, '');
+      setValueAndMaybeHighlight(e2_scaleResolutionDownBy, '');
+    }
   }
   if (pc1 == null) {
     return;
@@ -347,6 +370,19 @@ async function onEncodingsChanged(optionsStr) {
   }
 }
 
+function parseResolution(str) {
+  const i = str.indexOf('x');
+  if (i === -1) {
+    return undefined;
+  }
+  const maxWidth = parseInt(str.substring(0, i));
+  const maxHeight = parseInt(str.substring(i + 1));
+  if (isNaN(maxWidth) || isNaN(maxHeight)) {
+    return undefined;
+  }
+  return {maxWidth,maxHeight};
+}
+
 function getEncodingsFromHtml(deleteUndefined = true) {
   const encodings = [];
   for (let i = 0; i < 3; ++i) {
@@ -360,6 +396,11 @@ function getEncodingsFromHtml(deleteUndefined = true) {
       } else {
         encodings[i].scaleResolutionDownBy = undefined;
       }
+    }
+    encodings[i].scaleResolutionDownTo =
+        parseResolution(encodings_scaleResolutionDownTo[i].value);
+    if (encodings[i].scaleResolutionDownTo) {
+      console.log(`[${i}]: ${JSON.stringify(encodings[i].scaleResolutionDownTo)}`);
     }
     encodings[i].maxBitrate =
         parseFloat(encodings_maxBitrate[i].value);
@@ -481,7 +522,7 @@ async function pollGetStats() {
       pc2PrevStatsReport.set(stats.id, stats);
     }
   }
-  setTimeout(pollGetStats, 5000);
+  setTimeout(pollGetStats, 1000);
 }
 pollGetStats();
 
