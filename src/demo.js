@@ -11,24 +11,30 @@ const s_minfps = document.getElementById('s_minfpsid');
 const s_maxfps = document.getElementById('s_maxfpsid');
 
 const encodingsTable = document.getElementById('encodingsTableId');
-const e0_maxFramerate = document.getElementById('e0_maxFramerateId');
+const e0_codecSelect = document.getElementById('e0_codecSelectId');
 const e0_scalabilityMode = document.getElementById('e0_scalabilityModeId');
 const e0_scaleResolutionDownBy = document.getElementById('e0_scaleResolutionDownById');
 const e0_scaleResolutionDownTo = document.getElementById('e0_scaleResolutionDownToId');
 const e0_maxBitrate = document.getElementById('e0_maxBitrateId');
 const e0_active = document.getElementById('e0_activeId');
-const e1_maxFramerate = document.getElementById('e1_maxFramerateId');
+const e0_maxFramerate = document.getElementById('e0_maxFramerateId');
+const e1_codecSelect = document.getElementById('e1_codecSelectId');
 const e1_scalabilityMode = document.getElementById('e1_scalabilityModeId');
 const e1_scaleResolutionDownBy = document.getElementById('e1_scaleResolutionDownById');
 const e1_scaleResolutionDownTo = document.getElementById('e1_scaleResolutionDownToId');
 const e1_maxBitrate = document.getElementById('e1_maxBitrateId');
 const e1_active = document.getElementById('e1_activeId');
-const e2_maxFramerate = document.getElementById('e2_maxFramerateId');
+const e1_maxFramerate = document.getElementById('e1_maxFramerateId');
+const e2_codecSelect = document.getElementById('e2_codecSelectId');
 const e2_scalabilityMode = document.getElementById('e2_scalabilityModeId');
 const e2_scaleResolutionDownBy = document.getElementById('e2_scaleResolutionDownById');
 const e2_scaleResolutionDownTo = document.getElementById('e2_scaleResolutionDownToId');
 const e2_maxBitrate = document.getElementById('e2_maxBitrateId');
 const e2_active = document.getElementById('e2_activeId');
+const e2_maxFramerate = document.getElementById('e2_maxFramerateId');
+const encodings_codecSelect = [
+  e0_codecSelect, e1_codecSelect, e2_codecSelect
+];
 const encodings_scalabilityMode = [
   e0_scalabilityMode, e1_scalabilityMode, e2_scalabilityMode
 ];
@@ -355,6 +361,7 @@ async function onEncodingsChanged(optionsStr) {
   const newEncodings =
       getEncodingsFromHtml(/*deleteUndefined=*/false);
   for (let i = 0; i < 3; ++i) {
+    console.log(newEncodings[i].codec);
     for (let attribute in newEncodings[i]) {
       if (newEncodings[i][attribute] !== undefined) {
         params.encodings[i][attribute] = newEncodings[i][attribute];
@@ -391,6 +398,20 @@ function getEncodingsFromHtml(deleteUndefined = true) {
   const encodings = [];
   for (let i = 0; i < 3; ++i) {
     encodings.push({});
+
+    encodings[i].codec = encodings_codecSelect[i].value;
+    if (encodings[i].codec != undefined) {
+      encodings[i].codec = RTCRtpSender.getCapabilities('video').codecs.find(
+          codec => codec.mimeType == `video/${encodings[i].codec}`);
+    }
+    if (!encodings[i].codec) {
+      if (deleteUndefined) {
+        delete encodings[i].codec;
+      } else {
+        encodings[i].codec = undefined;
+      }
+    }
+
     encodings[i].scalabilityMode = encodings_scalabilityMode[i].value;
     encodings[i].scaleResolutionDownBy =
         parseFloat(encodings_scaleResolutionDownBy[i].value);
