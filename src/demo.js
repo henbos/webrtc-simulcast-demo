@@ -11,19 +11,19 @@ const s_minfps = document.getElementById('s_minfpsid');
 const s_maxfps = document.getElementById('s_maxfpsid');
 
 const encodingsTable = document.getElementById('encodingsTableId');
-const e0_maxfps = document.getElementById('e0_maxfpsid');
+const e0_maxFramerate = document.getElementById('e0_maxFramerateId');
 const e0_scalabilityMode = document.getElementById('e0_scalabilityModeId');
 const e0_scaleResolutionDownBy = document.getElementById('e0_scaleResolutionDownById');
 const e0_scaleResolutionDownTo = document.getElementById('e0_scaleResolutionDownToId');
 const e0_maxBitrate = document.getElementById('e0_maxBitrateId');
 const e0_active = document.getElementById('e0_activeId');
-const e1_maxfps = document.getElementById('e1_maxfpsid');
+const e1_maxFramerate = document.getElementById('e1_maxFramerateId');
 const e1_scalabilityMode = document.getElementById('e1_scalabilityModeId');
 const e1_scaleResolutionDownBy = document.getElementById('e1_scaleResolutionDownById');
 const e1_scaleResolutionDownTo = document.getElementById('e1_scaleResolutionDownToId');
 const e1_maxBitrate = document.getElementById('e1_maxBitrateId');
 const e1_active = document.getElementById('e1_activeId');
-const e2_maxfps = document.getElementById('e2_maxfpsid');
+const e2_maxFramerate = document.getElementById('e2_maxFramerateId');
 const e2_scalabilityMode = document.getElementById('e2_scalabilityModeId');
 const e2_scaleResolutionDownBy = document.getElementById('e2_scaleResolutionDownById');
 const e2_scaleResolutionDownTo = document.getElementById('e2_scaleResolutionDownToId');
@@ -44,8 +44,8 @@ const encodings_active = [
 const encodings_maxBitrate = [
   e0_maxBitrate, e1_maxBitrate, e2_maxBitrate
 ];
-const encodings_maxfps = [
-  e0_maxfps, e1_maxfps, e2_maxfps
+const encodings_maxFramerate = [
+  e0_maxFramerate, e1_maxFramerate, e2_maxFramerate
 ];
 const encodingStatusParagraph = document.getElementById('encodingStatusParagraphId');
 
@@ -71,8 +71,8 @@ function configScreenshare() {
   e0_active.value = e1_active.value = true;
   e2_active.value = false;
   e0_scaleResolutionDownBy.value = e1_scaleResolutionDownBy.value = 1;
-  e1_maxfps.value = 30;
-  e0_maxfps.value = 5;
+  e1_maxFramerate.value = 30;
+  e0_maxFramerate.value = 5;
   e1_maxBitrate.value = 2500;
   e0_maxBitrate.value = 420;
   sourceSelect.value = "gdm";
@@ -356,7 +356,11 @@ async function onEncodingsChanged(optionsStr) {
       getEncodingsFromHtml(/*deleteUndefined=*/false);
   for (let i = 0; i < 3; ++i) {
     for (let attribute in newEncodings[i]) {
-      params.encodings[i][attribute] = newEncodings[i][attribute];
+      if (newEncodings[i][attribute] !== undefined) {
+        params.encodings[i][attribute] = newEncodings[i][attribute];
+      } else {
+        delete params.encodings[i][attribute];
+      }
     }
   }
   encodingStatusParagraph.className = '';
@@ -415,9 +419,9 @@ function getEncodingsFromHtml(deleteUndefined = true) {
       encodings[i].maxBitrate = encodings[i].maxBitrate * 1000;  // kbps -> bps
     }
 
-    encodings[i].maxFramerate = parseFloat(encodings_maxfps[i].value);
+    encodings[i].maxFramerate = parseFloat(encodings_maxFramerate[i].value);
     if (isNaN(encodings[i].maxFramerate) ||
-      typeof encodings[i].maxFramerate !== 'number') {
+        typeof encodings[i].maxFramerate !== 'number') {
       if (deleteUndefined) {
         delete encodings[i].maxFramerate;
       } else {

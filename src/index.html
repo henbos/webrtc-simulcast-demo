@@ -17,6 +17,7 @@
       <option value="VP8">VP8</option>
       <option value="H264">H264</option>
       <option value="AV1">AV1</option>
+      <option value="H265">H265</option>
     </select>
     <select name="role" id="roleSelectId">
       <option value="loopback">loopback</option>
@@ -52,8 +53,6 @@
   <table id="encodingsTableId">
     <tr>
       <td>
-        <label class="paramLabel" for="e0_maxfps">Max FPS:</label>
-        <input class="paramInput" type="text" id="e0_maxfpsid" name="e0_maxfps"><br/>
         <label class="paramLabel" for="e0_rid">rid:</label>
         <input class="paramInput" type="text" id="e0_ridId" name="e0_rid" disabled="true" value="0"><br/>
         <label class="paramLabel" for="e0_scalabilityMode">scalabilityMode:</label>
@@ -77,10 +76,10 @@
           <option value="true">true</option>
           <option value="false">false</option>
         </select><br/>
+        <label class="paramLabel" for="e0_maxFramerate">maxFramerate:</label>
+        <input class="paramInput" type="text" id="e0_maxFramerateId" name="e0_maxFramerate" oninput="onEncodingsChanged()"><br/>
       </td>
       <td>
-        <label class="paramLabel" for="e1_maxfps">Max FPS:</label>
-        <input class="paramInput" type="text" id="e1_maxfpsid" name="e1_maxfps"><br/>
         <label class="paramLabel" for="e1_rid">rid:</label>
         <input class="paramInput" type="text" id="e1_ridId" name="e1_rid" disabled="true" value="1"><br/>
         <label class="paramLabel" for="e1_scalabilityMode">scalabilityMode:</label>
@@ -104,10 +103,10 @@
           <option value="true">true</option>
           <option value="false">false</option>
         </select><br/>
+        <label class="paramLabel" for="e1_maxFramerate">maxFramerate:</label>
+        <input class="paramInput" type="text" id="e1_maxFramerateId" name="e1_maxFramerate" oninput="onEncodingsChanged()"><br/>
       </td>
       <td>
-        <label class="paramLabel" for="e2_maxfps">Max FPS:</label>
-        <input class="paramInput" type="text" id="e2_maxfpsid" name="e2_maxfps"><br/>
         <label class="paramLabel" for="e2_rid">rid:</label>
         <input class="paramInput" type="text" id="e2_ridId" name="e2_rid" disabled="true" value="2"><br/>
         <label class="paramLabel" for="e2_scalabilityMode">scalabilityMode:</label>
@@ -131,6 +130,8 @@
           <option value="true">true</option>
           <option value="false">false</option>
         </select><br/>
+        <label class="paramLabel" for="e2_maxFramerate">maxFramerate:</label>
+        <input class="paramInput" type="text" id="e2_maxFramerateId" name="e2_maxFramerate" oninput="onEncodingsChanged()"><br/>
       </td>
     </tr>
   </table>
