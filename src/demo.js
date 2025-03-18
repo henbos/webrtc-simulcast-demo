@@ -206,7 +206,8 @@ async function onStart(doStop = true) {
       track.contentHint = contentHintSelect.value;
     }
     const transceiver =
-        pc1.addTransceiver(track, {sendEncodings:getEncodingsFromHtml()});
+        pc1.addTransceiver(track, {direction:'sendonly',
+                                   sendEncodings:getEncodingsFromHtml()});
     preferCodec(transceiver,
                 codecSelect.options[codecSelect.selectedIndex].value);
 
@@ -456,7 +457,7 @@ function getEncodingsFromHtml(deleteUndefined = true) {
 }
 
 function preferCodec(transceiver, codec) {
-  const preferredCodecs = RTCRtpReceiver.getCapabilities('video').codecs;
+  const preferredCodecs = RTCRtpSender.getCapabilities('video').codecs;
   for (let i = 0; i < preferredCodecs.length; ++i) {
     if (!preferredCodecs[i].mimeType.endsWith(codec)) {
       continue;
