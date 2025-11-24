@@ -36,6 +36,7 @@
     </select>
     <button onclick="onStart()">Start</button>
     <button onclick="onStop()">Stop</button>
+    <input type="checkbox" id="presetsCheckboxId"><label for="presets">Presets?</label>
   </p>
   <p>
     <label class="paramLabel" for="s_minfps">Source min FPS:</label>
@@ -65,7 +66,8 @@
         <label class="paramLabel" for="e0_rid">rid:</label>
         <input class="paramInput" type="text" id="e0_ridId" name="e0_rid" disabled="true" value="0"><br/>
         <label class="paramLabel" for="e0_scalabilityMode">scalabilityMode:</label>
-        <select class="paramInput" id="e0_scalabilityModeId" name="e0_scalabilityMode" onchange="onEncodingsChanged('triggerPresets')">
+        <select class="paramInput" id="e0_scalabilityModeId" name="e0_scalabilityMode" onchange="onEncodingsChanged()">
+          <option value="">undefined</option>
           <option value="L1T1">L1T1</option>
           <option value="L1T2">L1T2</option>
           <option value="L1T3">L1T3</option>
@@ -102,6 +104,7 @@
         <input class="paramInput" type="text" id="e1_ridId" name="e1_rid" disabled="true" value="1"><br/>
         <label class="paramLabel" for="e1_scalabilityMode">scalabilityMode:</label>
         <select class="paramInput" id="e1_scalabilityModeId" name="e1_scalabilityMode" onchange="onEncodingsChanged()">
+          <option value="">undefined</option>
           <option value="L1T1">L1T1</option>
           <option value="L1T2">L1T2</option>
           <option value="L1T3">L1T3</option>
@@ -138,6 +141,7 @@
         <input class="paramInput" type="text" id="e2_ridId" name="e2_rid" disabled="true" value="2"><br/>
         <label class="paramLabel" for="e2_scalabilityMode">scalabilityMode:</label>
         <select class="paramInput" id="e2_scalabilityModeId" name="e2_scalabilityMode" onchange="onEncodingsChanged()">
+          <option value="">undefined</option>
           <option value="L1T1">L1T1</option>
           <option value="L1T2">L1T2</option>
           <option value="L1T3">L1T3</option>

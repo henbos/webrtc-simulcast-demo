@@ -4,6 +4,7 @@ const roleSelect = document.getElementById('roleSelectId');
 const contentHintSelect = document.getElementById('contentHintId');
 const offerInput = document.getElementById('offerInputId');
 const answerInput = document.getElementById('answerInputId');
+const presetsCheckbox = document.getElementById('presetsCheckboxId');
 
 const statusParagraph = document.getElementById('statusParagraphId');
 
@@ -319,9 +320,9 @@ function clearHighlighting() {
   }
 }
 
-async function onEncodingsChanged(optionsStr) {
+async function onEncodingsChanged() {
   clearHighlighting();
-  if (optionsStr == 'triggerPresets') {
+  if (presetsCheckbox.checked) {
     const scalabilityMode = e0_scalabilityMode.value;
     e0_scalabilityMode.classList.add('highlightColor');
     setValueAndMaybeHighlight(e1_scalabilityMode, scalabilityMode);
@@ -359,14 +360,18 @@ async function onEncodingsChanged(optionsStr) {
   }
   const sender = pc1.getSenders()[0];
   const params = sender.getParameters();
+  // We don't `deleteUndefined` in `newEncodings` because we want to be able to
+  // iterate all parameters that we know about. If one is undefined, we still
+  // delete it from `params`, but that is a separate object from `newEncodings`.
   const newEncodings =
       getEncodingsFromHtml(/*deleteUndefined=*/false);
   for (let i = 0; i < 3; ++i) {
-    console.log(newEncodings[i].codec);
     for (let attribute in newEncodings[i]) {
       if (newEncodings[i][attribute] !== undefined) {
         params.encodings[i][attribute] = newEncodings[i][attribute];
       } else {
+        // Always delete undefined from the `params` object that we use for
+        // setParameters().
         delete params.encodings[i][attribute];
       }
     }
@@ -414,6 +419,13 @@ function getEncodingsFromHtml(deleteUndefined = true) {
     }
 
     encodings[i].scalabilityMode = encodings_scalabilityMode[i].value;
+    if (encodings[i].scalabilityMode == "") {
+      if (deleteUndefined) {
+        delete encodings[i].scalabilityMode;
+      } else {
+        encodings[i].scalabilityMode = undefined;
+      }
+    }
     encodings[i].scaleResolutionDownBy =
         parseFloat(encodings_scaleResolutionDownBy[i].value);
     if (isNaN(encodings[i].scaleResolutionDownBy)) {
@@ -453,6 +465,7 @@ function getEncodingsFromHtml(deleteUndefined = true) {
 
     encodings[i].active = (encodings_active[i].value == 'true');
   }
+  console.log(`encodings: ${JSON.stringify(encodings, null, 2)}`);
   return encodings;
 }
 
