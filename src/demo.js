@@ -72,6 +72,60 @@ let track = null;
 const pc1PrevStatsReport = new Map();
 const pc2PrevStatsReport = new Map();
 
+function copyEncodingsUrl() {
+  const encodings = getEncodingsFromHtml(/*deleteUndefined=*/true);
+  navigator.clipboard.writeText(
+    'https://henbos.github.io/webrtc-simulcast-demo/src/index.html' +
+    '?encodings=' + JSON.stringify(encodings));
+}
+
+function loadInitialEncodingsFromUrl() {
+  const encodingsStr =
+    new URLSearchParams(window.location.search).get('encodings');
+  if (!encodingsStr) {
+    return;
+  }
+  const encodings = JSON.parse(encodingsStr);
+  for (let i = 0; i < 3; ++i) {
+    if (encodings[i].codec?.mimeType) {
+      encodings[i].codec = encodings[i].codec.mimeType.substring(6);
+    }
+    if (encodings[i].scaleResolutionDownTo?.maxWidth &&
+      encodings[i].scaleResolutionDownTo?.maxHeight) {
+      const to = encodings[i].scaleResolutionDownTo;
+      encodings[i].scaleResolutionDownTo = `${to.maxWidth}x${to.maxHeight}`;
+    }
+    if (parseFloat(encodings[i].maxBitrate) != NaN) {
+      encodings[i].maxBitrate = parseFloat(encodings[i].maxBitrate) / 1000;
+    }
+    encodings[i].active = encodings[i].active ? 'true' : 'false';
+  }
+  const toValue = (value) => value ? value : '';
+  e0_codecSelect.value = toValue(encodings[0].codec);
+  e1_codecSelect.value = toValue(encodings[1].codec);
+  e2_codecSelect.value = toValue(encodings[2].codec);
+  e0_scalabilityMode.value = toValue(encodings[0].scalabilityMode);
+  e1_scalabilityMode.value = toValue(encodings[1].scalabilityMode);
+  e2_scalabilityMode.value = toValue(encodings[2].scalabilityMode);
+  e0_scaleResolutionDownBy.value = toValue(encodings[0].scaleResolutionDownBy);
+  e1_scaleResolutionDownBy.value = toValue(encodings[1].scaleResolutionDownBy);
+  e2_scaleResolutionDownBy.value = toValue(encodings[2].scaleResolutionDownBy);
+  e0_scaleResolutionDownTo.value = toValue(encodings[0].scaleResolutionDownTo);
+  e1_scaleResolutionDownTo.value = toValue(encodings[1].scaleResolutionDownTo);
+  e2_scaleResolutionDownTo.value = toValue(encodings[2].scaleResolutionDownTo);
+  e0_maxBitrate.value = toValue(encodings[0].maxBitrate);
+  e1_maxBitrate.value = toValue(encodings[1].maxBitrate);
+  e2_maxBitrate.value = toValue(encodings[2].maxBitrate);
+  e0_active.value = toValue(encodings[0].active);
+  e1_active.value = toValue(encodings[1].active);
+  e2_active.value = toValue(encodings[2].active);
+  e0_maxFramerate.value = toValue(encodings[0].maxFramerate);
+  e1_maxFramerate.value = toValue(encodings[1].maxFramerate);
+  e2_maxFramerate.value = toValue(encodings[2].maxFramerate);
+  onStart();
+}
+loadInitialEncodingsFromUrl();
+
 function configScreenshare() {
   s_maxfps.value = s_minfps.value = 30;
   e0_scalabilityMode.value = e1_scalabilityMode.value = "L1T2";
